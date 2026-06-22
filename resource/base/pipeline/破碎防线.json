@@ -18,8 +18,9 @@
         "post_delay": 1000,
         "next": [
             "破碎防线入口",
-            "[JumpBack]内海-左滑到尽头",
-            "[JumpBack]破碎防线_右划"
+            "[JumpBack]内海-推进到中段",
+            "[JumpBack]内海-中段微调向右",
+            "[JumpBack]内海-中段微调向左"
         ]
     },
     "大于等于72万": {
@@ -213,6 +214,9 @@
             "[JumpBack]点击暗域关卡奖励",
             "主菜单",
             "[JumpBack]侧边点击"
+        ],
+        "on_error": [
+            "确认已进入破碎防线页"
         ]
     },
     "破碎防线": {
@@ -242,52 +246,325 @@
             "点击暗域左下角奖励"
         ],
         "on_error": [
-            "[JumpBack]主菜单"
+            "破碎防线入口重试2"
         ]
     },
-    "破碎防线_右划": {
-        "action": {
-            "type": "Swipe",
+    "破碎防线入口重试2": {
+        "next": [
+            "确认已进入破碎防线页_重试2",
+            "破碎防线入口点击重试2"
+        ]
+    },
+    "破碎防线入口点击重试2": {
+        "recognition": {
+            "type": "OCR",
             "param": {
-                "begin": [
-                    1000,
-                    372,
-                    1,
-                    1
-                ],
-                "end": [
-                    [
-                        1103,
-                        372
-                    ]
+                "expected": [
+                    "破碎防线"
                 ]
             }
         },
-        "repeat": 5,
-        "repeat_delay": 200,
-        "post_wait_freezes": 20
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 1000,
+        "timeout": 5000,
+        "next": [
+            "点击暗域左下角奖励_重试2"
+        ],
+        "on_error": [
+            "破碎防线入口重试3"
+        ]
     },
-    "内海-左滑到尽头": {
+    "点击暗域左下角奖励_重试2": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    53,
+                    510,
+                    81,
+                    46
+                ],
+                "template": [
+                    "黄点.png"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    82,
+                    550,
+                    11,
+                    6
+                ]
+            }
+        },
+        "post_wait_freezes": 200,
+        "timeout": 5000,
+        "next": [
+            "[JumpBack]点击暗域本期奖励",
+            "[JumpBack]点击暗域关卡奖励",
+            "主菜单",
+            "[JumpBack]侧边点击"
+        ],
+        "on_error": [
+            "确认已进入破碎防线页_重试2"
+        ]
+    },
+    "破碎防线入口重试3": {
+        "next": [
+            "确认已进入破碎防线页_重试3",
+            "破碎防线入口点击重试3"
+        ]
+    },
+    "破碎防线入口点击重试3": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "破碎防线"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 1000,
+        "timeout": 5000,
+        "next": [
+            "点击暗域左下角奖励_重试3"
+        ],
+        "on_error": [
+            "破碎防线失败返回主菜单"
+        ]
+    },
+    "点击暗域左下角奖励_重试3": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    53,
+                    510,
+                    81,
+                    46
+                ],
+                "template": [
+                    "黄点.png"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    82,
+                    550,
+                    11,
+                    6
+                ]
+            }
+        },
+        "post_wait_freezes": 200,
+        "timeout": 5000,
+        "next": [
+            "[JumpBack]点击暗域本期奖励",
+            "[JumpBack]点击暗域关卡奖励",
+            "主菜单",
+            "[JumpBack]侧边点击"
+        ],
+        "on_error": [
+            "确认已进入破碎防线页_重试3"
+        ]
+    },
+    "确认已进入破碎防线页": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    160,
+                    110,
+                    520,
+                    620
+                ],
+                "expected": [
+                    "当前积分",
+                    "暗域",
+                    "ZONE-04"
+                ]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "timeout": 800,
+        "next": [
+            "破碎防线完成返回主菜单"
+        ],
+        "on_error": [
+            "破碎防线入口重试2"
+        ]
+    },
+    "确认已进入破碎防线页_重试2": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    160,
+                    110,
+                    520,
+                    620
+                ],
+                "expected": [
+                    "当前积分",
+                    "暗域",
+                    "ZONE-04"
+                ]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "timeout": 800,
+        "next": [
+            "破碎防线完成返回主菜单"
+        ],
+        "on_error": [
+            "破碎防线入口点击重试2"
+        ]
+    },
+    "确认已进入破碎防线页_重试3": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    160,
+                    110,
+                    520,
+                    620
+                ],
+                "expected": [
+                    "当前积分",
+                    "暗域",
+                    "ZONE-04"
+                ]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "timeout": 800,
+        "next": [
+            "破碎防线完成返回主菜单"
+        ],
+        "on_error": [
+            "破碎防线入口点击重试3"
+        ]
+    },
+    "破碎防线完成返回主菜单": {
+        "recognition": "TemplateMatch",
+        "template": "主菜单.png",
+        "roi": [
+            11,
+            6,
+            320,
+            79
+        ],
+        "action": "Click",
+        "next": [
+            "结束任务"
+        ],
+        "on_error": [
+            "结束任务"
+        ]
+    },
+    "破碎防线失败返回主菜单": {
+        "recognition": "TemplateMatch",
+        "template": "主菜单.png",
+        "roi": [
+            11,
+            6,
+            320,
+            79
+        ],
+        "action": "Click",
+        "next": [
+            "结束任务"
+        ],
+        "on_error": [
+            "结束任务"
+        ]
+    },
+    "内海-推进到中段": {
+        "max_hit": 1,
         "action": {
             "type": "Swipe",
             "param": {
                 "begin": [
-                    800,
+                    840,
                     369,
                     1,
                     1
                 ],
                 "end": [
                     [
-                        200,
+                        340,
                         369
                     ]
                 ]
             }
         },
-        "repeat": 5,
-        "repeat_delay": 200,
-        "post_wait_freezes": 20
+        "repeat": 2,
+        "repeat_delay": 250,
+        "post_wait_freezes": 500
+    },
+    "内海-中段微调向右": {
+        "max_hit": 2,
+        "action": {
+            "type": "Swipe",
+            "param": {
+                "begin": [
+                    520,
+                    369,
+                    1,
+                    1
+                ],
+                "end": [
+                    [
+                        790,
+                        369
+                    ]
+                ]
+            }
+        },
+        "repeat": 1,
+        "repeat_delay": 250,
+        "post_wait_freezes": 500
+    },
+    "内海-中段微调向左": {
+        "max_hit": 2,
+        "action": {
+            "type": "Swipe",
+            "param": {
+                "begin": [
+                    790,
+                    369,
+                    1,
+                    1
+                ],
+                "end": [
+                    [
+                        520,
+                        369
+                    ]
+                ]
+            }
+        },
+        "repeat": 1,
+        "repeat_delay": 250,
+        "post_wait_freezes": 500
     },
     "点击暗域本期奖励": {
         "max_hit": 1,

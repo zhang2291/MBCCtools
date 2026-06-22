@@ -33,7 +33,7 @@
       "type": "Click",
       "param": {}
     },
-    "post_delay": 2000,
+    "post_delay": 1200,
     "focus": {
       "Node.Action.Succeeded": "识别密盟入口"
     },
@@ -67,7 +67,7 @@
         ]
       }
     },
-    "post_wait_freezes": 2000
+    "post_wait_freezes": 1200
   },
   "捐赠入口": {
     "recognition": {
@@ -86,7 +86,7 @@
       "type": "Click",
       "param": {}
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "focus": {
       "Node.Recognition.Starting": "开始捐赠"
     },
@@ -113,7 +113,7 @@
       "type": "Click",
       "param": {}
     },
-    "post_delay": 1500,
+    "post_delay": 800,
     "focus": {
       "Node.Recognition.Succeeded": "全部捐赠"
     },
@@ -138,7 +138,7 @@
       "type": "DoNothing",
       "param": {}
     },
-    "post_delay": 1500,
+    "post_delay": 800,
     "focus": {
       "Node.Recognition.Succeeded": "捐赠完成"
     },

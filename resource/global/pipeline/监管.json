@@ -39,7 +39,7 @@
             1,
             1
         ],
-        "post_delay": 1500,
+        "post_delay": 800,
         "next": [
             "开始按钮"
         ]
@@ -82,6 +82,6 @@
             "主菜单"
         ],
         "timeout": 4000,
-        "post_wait_freezes": 2000
+        "post_wait_freezes": 1200
     }
 }

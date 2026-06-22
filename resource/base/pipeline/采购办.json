@@ -9,7 +9,7 @@
     ]
   },
   "采购办入口": {
-    "post_delay": 2000,
+    "post_delay": 1200,
     "focus": {
       "Node.Action.Succeeded": "进入采购办"
     },
@@ -36,7 +36,7 @@
     ]
   },
   "精选礼包": {
-    "post_delay": 1000,
+    "post_delay": 600,
     "focus": {
       "Node.Action.Succeeded": "精选礼包"
     },
@@ -59,8 +59,8 @@
     ]
   },
   "精选推荐": {
-    "pre_delay": 300,
-    "post_delay": 400,
+    "pre_delay": 150,
+    "post_delay": 200,
     "focus": {
       "Node.Action.Succeeded": "精选推荐"
     },
@@ -83,7 +83,7 @@
     ]
   },
   "每日体力": {
-    "post_delay": 1000,
+    "post_delay": 600,
     "recognition": {
       "type": "OCR",
       "param": {

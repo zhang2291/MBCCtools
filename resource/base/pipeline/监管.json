@@ -20,7 +20,7 @@
         "focus": {
             "Node.Action.Succeeded": "进入监管界面"
         },
-        "post_delay": 2000,
+        "post_delay": 1200,
         "next": [
             "收菜",
             "监管终端"
@@ -45,7 +45,7 @@
         "focus": {
             "Node.Action.Succeeded": "一键收取资源"
         },
-        "post_delay": 2000,
+        "post_delay": 1200,
         "next": [
             "[JumpBack]关闭界面",
             "监管终端"
@@ -62,7 +62,7 @@
         ],
         "threshold": 0.9,
         "action": "Click",
-        "post_delay": 1500,
+        "post_delay": 800,
         "next": [
             "开始按钮"
         ]
@@ -70,21 +70,45 @@
     "开始按钮": {
         "recognition": "TemplateMatch",
         "template": "开始按钮.png",
+        "roi": [
+            1079,
+            343,
+            160,
+            165
+        ],
         "action": "Click",
+        "target": [
+            1158,
+            426,
+            1,
+            1
+        ],
         "next": [
             "跳过",
-            "[JumpBack]检查选项"
+            "[JumpBack]开始按钮"
         ],
         "on_error": [
             "监管终端"
         ],
         "timeout": 4000,
-        "post_wait_freezes": 2000
+        "post_wait_freezes": 1200
     },
     "跳过": {
         "recognition": "OCR",
+        "roi": [
+            1153,
+            15,
+            97,
+            34
+        ],
         "expected": "跳过",
         "action": "Click",
+        "target": [
+            1203,
+            19,
+            37,
+            24
+        ],
         "next": [
             "监管关闭界面",
             "[JumpBack]检查选项"
@@ -93,7 +117,7 @@
             "主菜单"
         ],
         "timeout": 4000,
-        "post_wait_freezes": 2000
+        "post_wait_freezes": 1200
     },
     "下一个": {
         "recognition": "TemplateMatch",
@@ -103,8 +127,11 @@
         "next": [
             "跳过"
         ],
+        "on_error": [
+            "主菜单"
+        ],
         "timeout": 4000,
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 600
     },
     "检查选项": {
         "recognition": "TemplateMatch",
@@ -118,7 +145,7 @@
         "action": "Click",
         "order_by": "Vertical",
         "index": 0,
-        "post_wait_freezes": 2000
+        "post_wait_freezes": 1200
     },
     "监管关闭界面": {
         "recognition": "TemplateMatch",
@@ -140,3 +167,10 @@
         "post_wait_freezes": 300
     }
 }
+
+
+
+
+
+
+

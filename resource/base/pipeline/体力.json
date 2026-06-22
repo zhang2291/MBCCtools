@@ -24,7 +24,7 @@
         "focus": {
             "Node.Action.Succeeded": "领取体力"
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "识别第一罐体力"
         ]
@@ -38,7 +38,7 @@
             193,
             211
         ],
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "主菜单"
         ]
@@ -71,7 +71,7 @@
             186
         ],
         "action": "Click",
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "领取第二罐体力",
             "[JumpBack]关闭界面"

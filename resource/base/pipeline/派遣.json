@@ -22,7 +22,7 @@
         "focus": {
             "Node.Action.Succeeded": "进入派遣界面"
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "派遣区域选择"
         ]
@@ -37,7 +37,7 @@
             65
         ],
         "action": "Click",
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "发出派遣",
             "[JumpBack]收集派遣奖励"
@@ -53,7 +53,7 @@
             69
         ],
         "action": "Click",
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "关闭界面"
         ]
@@ -71,7 +71,7 @@
         "focus": {
             "Node.Action.Succeeded": "一键派遣完成"
         },
-        "post_wait_freezes": 2000,
+        "post_wait_freezes": 1200,
         "next": [
             "主菜单"
         ]

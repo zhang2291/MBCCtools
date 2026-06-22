@@ -1,0 +1,11 @@
+{
+    "退出游戏": {
+        "action": {
+            "type": "StopApp",
+            "param": {
+                "package": "com.zy.wqmt.global"
+            }
+        },
+        "post_delay": 1000
+    }
+}

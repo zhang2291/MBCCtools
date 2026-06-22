@@ -23,7 +23,7 @@
     "focus": {
       "Node.Action.Succeeded": "进入邮箱"
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "领取邮件",
       "[JumpBack]主菜单",
@@ -46,7 +46,7 @@
         ]
       }
     },
-    "post_delay": 1500,
+    "post_delay": 800,
     "timeout": 3000,
     "next": [
       "邮件获得物资弹窗",
@@ -86,7 +86,7 @@
         ]
       }
     },
-    "post_wait_freezes": 1000,
+    "post_wait_freezes": 600,
     "timeout": 3000,
     "next": [
       "主菜单",

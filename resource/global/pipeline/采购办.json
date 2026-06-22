@@ -29,7 +29,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_入口",
       "[JumpBack]采购办网络确认_入口",
@@ -55,7 +55,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_入口",
       "[JumpBack]采购办网络确认_入口",
@@ -81,7 +81,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_精选",
       "[JumpBack]采购办网络确认_精选",
@@ -107,7 +107,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_精选",
       "[JumpBack]采购办网络确认_精选",
@@ -133,7 +133,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_养成",
       "[JumpBack]采购办网络确认_养成",
@@ -159,7 +159,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_养成",
       "[JumpBack]采购办网络确认_养成",
@@ -185,7 +185,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_左滑",
       "[JumpBack]采购办网络确认_左滑",
@@ -211,7 +211,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_左滑",
       "[JumpBack]采购办网络确认_左滑",
@@ -237,7 +237,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_免费",
       "[JumpBack]采购办网络确认_免费",
@@ -263,7 +263,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_免费",
       "[JumpBack]采购办网络确认_免费",
@@ -289,7 +289,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_详情",
       "[JumpBack]采购办网络确认_详情",
@@ -315,7 +315,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_详情",
       "[JumpBack]采购办网络确认_详情",
@@ -341,7 +341,7 @@
         "timeout": 5000
       }
     },
-    "post_delay": 1000,
+    "post_delay": 600,
     "next": [
       "[JumpBack]采购办网络恢复_获得",
       "[JumpBack]采购办网络确认_获得",
@@ -368,7 +368,7 @@
     "action": {
       "type": "Click"
     },
-    "post_wait_freezes": 2000,
+    "post_wait_freezes": 1200,
     "next": [
       "[JumpBack]采购办网络恢复_获得",
       "[JumpBack]采购办网络确认_获得",
@@ -377,7 +377,7 @@
     ]
   },
   "采购办入口": {
-    "post_delay": 2000,
+    "post_delay": 1200,
     "focus": {
       "Node.Action.Succeeded": "进入采购办"
     },
@@ -409,7 +409,7 @@
     ]
   },
   "精选礼包": {
-    "post_delay": 1500,
+    "post_delay": 800,
     "focus": {
       "Node.Action.Succeeded": "精选礼包"
     },
@@ -435,8 +435,8 @@
     ]
   },
   "养成补给": {
-    "pre_delay": 800,
-    "post_delay": 2500,
+    "pre_delay": 400,
+    "post_delay": 1500,
     "focus": {
       "Node.Action.Succeeded": "养成补给"
     },
@@ -485,7 +485,7 @@
         ]
       }
     },
-    "post_delay": 2500,
+    "post_delay": 1500,
     "next": [
       "[JumpBack]采购办网络恢复_左滑",
       "[JumpBack]采购办网络确认_左滑",
@@ -493,7 +493,7 @@
     ]
   },
   "确认养成补给选中": {
-    "pre_delay": 2000,
+    "pre_delay": 1000,
     "recognition": {
       "type": "OCR",
       "param": {
@@ -560,14 +560,14 @@
         "duration": 700
       }
     },
-    "post_wait_freezes": 2500,
+    "post_wait_freezes": 1500,
     "next": [
       "每日体力",
       "采购办左滑补偿1"
     ]
   },
   "每日体力": {
-    "post_delay": 1000,
+    "post_delay": 600,
     "recognition": {
       "type": "OCR",
       "param": {
@@ -598,7 +598,7 @@
     "on_error": []
   },
   "采购办左滑补偿1": {
-    "pre_delay": 2000,
+    "pre_delay": 1000,
     "action": {
       "type": "Swipe",
       "param": {
@@ -619,14 +619,14 @@
         "duration": 700
       }
     },
-    "post_wait_freezes": 2500,
+    "post_wait_freezes": 1500,
     "next": [
       "每日体力_补偿1",
       "采购办完成后返回"
     ]
   },
   "每日体力_补偿1": {
-    "post_delay": 1000,
+    "post_delay": 600,
     "recognition": {
       "type": "OCR",
       "param": {
@@ -657,7 +657,7 @@
     "on_error": []
   },
   "采购办左滑补偿2": {
-    "pre_delay": 2000,
+    "pre_delay": 1000,
     "action": {
       "type": "Swipe",
       "param": {
@@ -678,13 +678,13 @@
         "duration": 700
       }
     },
-    "post_wait_freezes": 2500,
+    "post_wait_freezes": 1500,
     "next": [
       "每日体力_补偿2"
     ]
   },
   "每日体力_补偿2": {
-    "post_delay": 1000,
+    "post_delay": 600,
     "recognition": {
       "type": "OCR",
       "param": {
@@ -817,7 +817,7 @@
         ]
       }
     },
-    "post_wait_freezes": 1000,
+    "post_wait_freezes": 600,
     "timeout": 3000,
     "next": [
       "采购办完成后返回"

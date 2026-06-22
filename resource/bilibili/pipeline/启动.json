@@ -38,7 +38,7 @@
                 ]
             }
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "focus": {
             "Node.Action.Succeeded": "关闭公告"
         }
@@ -53,7 +53,7 @@
         "action": {
             "type": "Click"
         },
-        "post_delay": 10000,
+        "post_delay": 4000,
         "focus": {
             "Node.Action.Succeeded": "点击登录"
         },
@@ -69,6 +69,7 @@
             }
         },
         "next": [
+            "[JumpBack]登录",
             "[JumpBack]刮刮乐",
             "[JumpBack]情绪检测",
             "[JumpBack]禁闭者生日",
@@ -102,7 +103,7 @@
                 ]
             }
         },
-        "post_wait_freezes": 1000,
+        "post_wait_freezes": 600,
         "focus": {
             "Node.Action.Succeeded": "情绪检测"
         },
@@ -135,7 +136,7 @@
                 ]
             }
         },
-        "post_wait_freezes": 3000
+        "post_wait_freezes": 1500
     },
     "前往补测": {
         "recognition": {
@@ -177,7 +178,7 @@
                 ]
             }
         },
-        "post_wait_freezes": 1000,
+        "post_wait_freezes": 600,
         "next": [
             "禁闭者生日_SecondClick"
         ]
@@ -222,7 +223,7 @@
                 ]
             }
         },
-        "post_wait_freezes": 2000
+        "post_wait_freezes": 1200
     },
     "月卡提示 - 取消": {
         "recognition": {
@@ -258,7 +259,7 @@
         "action": {
             "type": "Click"
         },
-        "post_wait_freezes": 2000,
+        "post_wait_freezes": 1200,
         "next": [
             "关闭界面"
         ]
@@ -275,7 +276,7 @@
         "action": {
             "type": "Click"
         },
-        "post_wait_freezes": 3000,
+        "post_wait_freezes": 1500,
         "focus": {
             "Node.Action.Succeeded": "关闭一般弹窗"
         }
@@ -295,7 +296,7 @@
                 ]
             }
         },
-        "pre_delay": 2000,
+        "pre_delay": 1000,
         "action": {
             "type": "DoNothing",
             "param": {
@@ -339,7 +340,7 @@
         "action": {
             "type": "Click"
         },
-        "post_delay": 10000
+        "post_delay": 4000
     },
     "关闭公告_异常处理": {
         "recognition": {
@@ -365,7 +366,7 @@
                 ]
             }
         },
-        "post_delay": 1000
+        "post_delay": 600
     },
     "登录前异常处理": {
         "action": {
@@ -392,7 +393,7 @@
                 "package": "com.zy.wqmt.bilibili"
             }
         },
-        "post_delay": 5000,
+        "post_delay": 3000,
         "next": [
             "等待加载"
         ]
@@ -415,7 +416,7 @@
         "action": {
             "type": "Click"
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "第一次滑动"
         ]
@@ -440,7 +441,7 @@
                 ]
             }
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "第二次滑动"
         ]
@@ -465,7 +466,7 @@
                 ]
             }
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "next": [
             "关闭界面1"
         ]
@@ -501,13 +502,13 @@
                 ]
             }
         },
-        "post_wait_freezes": 1000,
+        "post_wait_freezes": 600,
         "next": [
             "点击"
         ]
     },
     "等待加载": {
-        "post_wait_freezes": 4000,
+        "post_wait_freezes": 2500,
         "next": [
             "登录前处理"
         ]
