@@ -279,7 +279,7 @@
         "focus": {
             "Node.Recognition.Succeeded": "切换到狄斯"
         },
-        "post_wait_freezes": 500
+        "post_wait_freezes": 3000
     },
     "锈河": {
         "recognition": "OCR",
