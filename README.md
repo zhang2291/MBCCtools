@@ -9,6 +9,14 @@
 由 [MaaFramework](https://github.com/MaaXYZ/MaaFramework) 强力驱动！
 </div>
 
+## ⚠️ Fork 说明
+
+> 本仓库是 [quietlysnow/MBCCtools](https://github.com/quietlysnow/MBCCtools) 的个人 Fork。项目主体、GUI 打包方案及原始功能均来自上游项目。
+>
+> 本仓库仅针对个人设备和使用习惯调整了部分任务逻辑，仅供个人本地使用与测试，不代表上游官方版本，也不承诺适用于其他环境或提供用户支持。
+>
+> 如需通用版本、完整文档或问题反馈，请优先访问[上游仓库](https://github.com/quietlysnow/MBCCtools)，并遵守上游项目的开源许可证。
+
 ## 📖 项目说明
 
 本项目基于 [MACC](https://github.com/mxia9416/MACC) 项目开发，因原项目长期未更新且无法联系作者，故重新编写此项目，开发过程中参考了 MACC 的设计思路。
@@ -30,7 +38,8 @@
 
 ## 使用说明
 
-下载地址：<https://github.com/quietlysnow/MBCCtools/releases>
+- 上游正式版本：<https://github.com/quietlysnow/MBCCtools/releases>
+- 本 Fork 的个人构建（如有）：<https://github.com/zhang2291/MBCCtools/releases>
 
 #### Windows 用户
 - **绝大多数用户**：下载 `MBCCtools-win-x86_64.zip`
@@ -54,7 +63,7 @@
 0. 完整克隆本项目及子项目
 
     ```bash
-    git clone --recursive https://github.com/quietlysnow/MBCCtools.git
+    git clone --recursive https://github.com/zhang2291/MBCCtools.git
     ```
 
 1. 下载 MaaFramework 的 [Release 包](https://github.com/MaaXYZ/MaaFramework/releases)，解压到 `deps` 文件夹中
@@ -65,6 +74,26 @@
     ```
 
 生成的二进制及相关资源文件在 `install` 目录下
+
+### 本地修改后启动 GUI
+
+> 以下步骤是根据上游 GitHub Actions 打包流程补充的个人本地组装方式。上游 README 本身只要求下载 MaaFramework，并未要求单独下载 MFAAvalonia；正式 Release 压缩包中已经包含 GUI。
+
+不需要将修改推送到 GitHub，也不需要创建 Tag 或 Release。本地准备一次 GUI 文件后，后续每次修改都可以直接重新打包并启动。
+
+1. 按上面的编译说明准备好 `deps` 目录。
+2. 从 [MFAAvalonia Releases](https://github.com/MaaXYZ/MFAAvalonia/releases) 下载与本机架构对应的 Windows 压缩包。绝大多数 Windows 电脑选择 `win-x64`。
+3. 将压缩包内的文件解压到本仓库的 `install` 目录，并确认存在 `install/MFAAvalonia.exe`。
+4. 每次修改 Pipeline、图片或 `interface.json` 后，在仓库根目录执行：
+
+    ```powershell
+    python .\install.py v1.4.3-local.1
+    .\install\MFAAvalonia.exe
+    ```
+
+`install.py` 会把当前工作区中的 `resource`、`interface.json` 和 MaaFramework 文件更新到 `install`，并保留已经放入其中的 MFAAvalonia GUI 文件。因此，本地验证可以完全在 `install` 目录中进行。
+
+> 如果删除或重命名了资源文件，建议清理旧的 `install` 目录后，重新解压 MFAAvalonia 并执行 `install.py`，避免旧资源残留影响测试。
 
 ## 开发相关
 
