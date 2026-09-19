@@ -6,7 +6,7 @@
   "version": "v1.4.3",
   "mirrorchyan_rid": "MBCCtools",
   "mirrorchyan_multiplatform": true,
-  "url": "https://github.com/quietlysnow/MBCCtools",
+  "url": "https://github.com/zhang2291/MBCCtools",
   "controller": [
     {
       "name": "安卓端",
@@ -708,5 +708,5 @@
       "type": "select"
     }
   },
-  "github": "https://github.com/quietlysnow/MBCCtools"
+  "github": "https://github.com/zhang2291/MBCCtools"
 }
