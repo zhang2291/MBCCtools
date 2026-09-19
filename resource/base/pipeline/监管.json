@@ -1,4 +1,111 @@
 {
+    "下一个": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": "下一位.png",
+                "threshold": 0.9
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 600,
+        "timeout": 2000,
+        "next": [
+            "跳过"
+        ],
+        "on_error": [
+            "主菜单"
+        ]
+    },
+    "开始按钮": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    1079,
+                    343,
+                    160,
+                    165
+                ],
+                "template": "开始按钮.png"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1158,
+                    426,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_wait_freezes": 1200,
+        "timeout": 2000,
+        "next": [
+            "跳过",
+            "开始按钮"
+        ],
+        "on_error": [
+            "监管终端"
+        ]
+    },
+    "收菜": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    21,
+                    85,
+                    209,
+                    294
+                ],
+                "template": "一键收取.png"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    139,
+                    342,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "focus": {
+            "Node.Action.Succeeded": "一键收取资源"
+        },
+        "next": [
+            "[JumpBack]关闭界面",
+            "监管终端"
+        ]
+    },
+    "检查选项": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    1129,
+                    526,
+                    84,
+                    146
+                ],
+                "template": "选择对话.png",
+                "order_by": "Vertical",
+                "index": 0
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 1200
+    },
     "监管": {
         "next": [
             "监管入口",
@@ -8,169 +115,111 @@
         ]
     },
     "监管入口": {
-        "recognition": "OCR",
-        "expected": "监管",
-        "roi": [
-            957,
-            379,
-            116,
-            86
-        ],
-        "action": "Click",
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    379,
+                    116,
+                    86
+                ],
+                "expected": "监管"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 1200,
         "focus": {
             "Node.Action.Succeeded": "进入监管界面"
         },
-        "post_delay": 1200,
         "next": [
             "收菜",
             "监管终端"
         ]
     },
-    "收菜": {
-        "recognition": "TemplateMatch",
-        "template": "一键收取.png",
-        "roi": [
-            21,
-            85,
-            209,
-            294
-        ],
-        "action": "Click",
-        "target": [
-            139,
-            342,
-            1,
-            1
-        ],
-        "focus": {
-            "Node.Action.Succeeded": "一键收取资源"
+    "监管关闭界面": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": "获取物资.png"
+            }
         },
-        "post_delay": 1200,
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1208,
+                    366,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_wait_freezes": 300,
+        "timeout": 2000,
         "next": [
-            "[JumpBack]关闭界面",
-            "监管终端"
+            "下一个"
+        ],
+        "on_error": [
+            "主菜单"
         ]
     },
     "监管终端": {
-        "recognition": "TemplateMatch",
-        "template": "监管终端.png",
-        "roi": [
-            21,
-            85,
-            209,
-            294
-        ],
-        "threshold": 0.9,
-        "action": "Click",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    21,
+                    85,
+                    209,
+                    294
+                ],
+                "template": "监管终端.png",
+                "threshold": 0.9
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
         "post_delay": 800,
         "next": [
             "开始按钮"
         ]
     },
-    "开始按钮": {
-        "recognition": "TemplateMatch",
-        "template": "开始按钮.png",
-        "roi": [
-            1079,
-            343,
-            160,
-            165
-        ],
-        "action": "Click",
-        "target": [
-            1158,
-            426,
-            1,
-            1
-        ],
-        "next": [
-            "跳过",
-            "[JumpBack]开始按钮"
-        ],
-        "on_error": [
-            "监管终端"
-        ],
-        "timeout": 4000,
-        "post_wait_freezes": 1200
-    },
     "跳过": {
-        "recognition": "OCR",
-        "roi": [
-            1153,
-            15,
-            97,
-            34
-        ],
-        "expected": "跳过",
-        "action": "Click",
-        "target": [
-            1203,
-            19,
-            37,
-            24
-        ],
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1153,
+                    15,
+                    97,
+                    34
+                ],
+                "expected": "跳过"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1203,
+                    19,
+                    37,
+                    24
+                ]
+            }
+        },
+        "post_wait_freezes": 1200,
+        "timeout": 2000,
         "next": [
             "监管关闭界面",
             "[JumpBack]检查选项"
         ],
         "on_error": [
             "主菜单"
-        ],
-        "timeout": 4000,
-        "post_wait_freezes": 1200
-    },
-    "下一个": {
-        "recognition": "TemplateMatch",
-        "template": "下一位.png",
-        "threshold": 0.9,
-        "action": "Click",
-        "next": [
-            "跳过"
-        ],
-        "on_error": [
-            "主菜单"
-        ],
-        "timeout": 4000,
-        "post_wait_freezes": 600
-    },
-    "检查选项": {
-        "recognition": "TemplateMatch",
-        "template": "选择对话.png",
-        "roi": [
-            1129,
-            526,
-            84,
-            146
-        ],
-        "action": "Click",
-        "order_by": "Vertical",
-        "index": 0,
-        "post_wait_freezes": 1200
-    },
-    "监管关闭界面": {
-        "recognition": "TemplateMatch",
-        "template": "获取物资.png",
-        "action": "Click",
-        "target": [
-            1208,
-            366,
-            1,
-            1
-        ],
-        "next": [
-            "下一个"
-        ],
-        "timeout": 4000,
-        "on_error": [
-            "主菜单"
-        ],
-        "post_wait_freezes": 300
+        ]
     }
 }
-
-
-
-
-
-
-

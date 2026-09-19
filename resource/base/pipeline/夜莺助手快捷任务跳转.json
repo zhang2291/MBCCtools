@@ -1,0 +1,356 @@
+{
+    "助手模式入口点击": {
+        "max_hit": 1,
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1095,
+                    652,
+                    148,
+                    51
+                ],
+                "expected": [
+                    "助手模式"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "repeat": 1,
+        "post_delay": 1000
+    },
+    "夜莺助手快捷任务跳转": {
+        "timeout": 5000,
+        "next": [
+            "[JumpBack]助手模式入口点击",
+            "[JumpBack]识别体力领取",
+            "[JumpBack]识别监管系统",
+            "[JumpBack]识别监管事件",
+            "[JumpBack]识别新邮件",
+            "[JumpBack]识别记忆风暴",
+            "[JumpBack]识别派遣",
+            "[JumpBack]识别秘盟捐赠",
+            "[JumpBack]识别浊暗之阱",
+            "[JumpBack]识别友情点",
+            "[JumpBack]识别免费礼包"
+        ],
+        "on_error": [
+            "结束任务"
+        ]
+    },
+    "识别体力领取": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "体力专属补给可领取"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 700,
+        "next": [
+            "关闭界面"
+        ]
+    },
+    "识别免费礼包": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "有免费礼包可购买"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "每日体力"
+        ]
+    },
+    "识别友情点": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "有友情点可以领取"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "领取友情点"
+        ]
+    },
+    "识别新邮件": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "收到新邮件"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "领取邮件"
+        ]
+    },
+    "识别派遣": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "有派遣任务可以进行"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "派遣区域选择"
+        ]
+    },
+    "识别浊暗之阱": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "有浊暗之阱事务需要处理"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "浊暗之阱扫荡",
+            "乐园",
+            "浊暗之阱入口"
+        ]
+    },
+    "识别监管事件": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "前往处理监管事件"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "开始按钮",
+            "监管终端"
+        ]
+    },
+    "识别监管系统": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "监管系统有物资可收取"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 700,
+        "next": [
+            "关闭界面"
+        ]
+    },
+    "识别秘盟捐赠": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "有秘盟捐赠次数可用"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "秘盟流程开始"
+        ]
+    },
+    "识别记忆风暴": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    957,
+                    232,
+                    305,
+                    67
+                ],
+                "expected": [
+                    "有记忆风暴次数可用"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1169,
+                    240,
+                    51,
+                    38
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "next": [
+            "记忆风暴优先选择"
+        ]
+    }
+}

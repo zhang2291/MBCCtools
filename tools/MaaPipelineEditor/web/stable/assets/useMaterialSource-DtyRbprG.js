@@ -1,0 +1,1 @@
+import{r,e as u}from"./index-BWUZEP3P.js";function s(e){const a=r.useRef(!1),t=r.useCallback((o,n)=>{a.current=n==="upload",e(o)},[e]);return{uploaded:a,onScreenshotChange:t}}function i(e){e&&u("achievement:uploaded_material_used")}export{i as r,s as u};

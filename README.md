@@ -58,42 +58,151 @@
 
 ## 🔧 编译说明
 
-> ⚠️ 仅当需要开发本项目时才需要关注此部分，普通用户请直接[下载发布版](https://github.com/quietlysnow/MBCCtools/releases) 
+> 以下为本 Fork 当前实际使用的构建方式。普通用户直接下载 Release 即可。
 
-0. 完整克隆本项目及子项目
+### 目录建议
 
-    ```bash
-    git clone --recursive https://github.com/zhang2291/MBCCtools.git
-    ```
+建议三个源码仓库放在同一级目录，方便桌面版和 Android 版一起维护：
 
-1. 下载 MaaFramework 的 [Release 包](https://github.com/MaaXYZ/MaaFramework/releases)，解压到 `deps` 文件夹中
-2. 安装
+```text
+D:\a-maa-dev\
+├─ MBCCtools
+├─ MFAAvalonia
+└─ MaaFwApp
+```
 
-    ```python
-    python ./install.py
-    ```
+其中 `MFAAvalonia` 用于 Windows GUI，`MaaFwApp` 用于 Android GUI。后续可以正常 `git pull/fetch` 更新；各仓库生成的 `bin`、`obj`、`build` 目录都可以安全删除，需要时重新构建即可。
 
-生成的二进制及相关资源文件在 `install` 目录下
+### 1. 准备 MBCCtools / MaaFramework
 
-### 本地修改后启动 GUI
+克隆本项目：
 
-> 以下步骤是根据上游 GitHub Actions 打包流程补充的个人本地组装方式。上游 README 本身只要求下载 MaaFramework，并未要求单独下载 MFAAvalonia；正式 Release 压缩包中已经包含 GUI。
+```powershell
+git clone --recursive https://github.com/zhang2291/MBCCtools.git
+cd MBCCtools
+```
 
-不需要将修改推送到 GitHub，也不需要创建 Tag 或 Release。本地准备一次 GUI 文件后，后续每次修改都可以直接重新打包并启动。
+从 [MaaFramework Releases](https://github.com/MaaXYZ/MaaFramework/releases) 下载对应 Windows 包并解压到 `deps`，确认至少存在：
+```text
+deps\bin
+deps\share\MaaAgentBinary
+```
 
-1. 按上面的编译说明准备好 `deps` 目录。
-2. 从 [MFAAvalonia Releases](https://github.com/MaaXYZ/MFAAvalonia/releases) 下载与本机架构对应的 Windows 压缩包。绝大多数 Windows 电脑选择 `win-x64`。
-3. 将压缩包内的文件解压到本仓库的 `install` 目录，并确认存在 `install/MFAAvalonia.exe`。
-4. 每次修改 Pipeline、图片或 `interface.json` 后，在仓库根目录执行：
+可先单独生成资源安装目录：
 
-    ```powershell
-    python .\install.py v1.4.3-local.1
-    .\install\MFAAvalonia.exe
-    ```
+```powershell
+python .\install.py v1.4.3-local.1
+```
 
-`install.py` 会把当前工作区中的 `resource`、`interface.json` 和 MaaFramework 文件更新到 `install`，并保留已经放入其中的 MFAAvalonia GUI 文件。因此，本地验证可以完全在 `install` 目录中进行。
+生成内容位于 `install\`。
 
-> 如果删除或重命名了资源文件，建议清理旧的 `install` 目录后，重新解压 MFAAvalonia 并执行 `install.py`，避免旧资源残留影响测试。
+### 2. 构建 Windows 桌面版
+
+本 Fork 的桌面版包含对 MFAAvalonia 的本地修改以及内置 MaaPipelineEditor，因此推荐从修改后的 MFAAvalonia 源码构建，而不是直接下载官方 GUI 覆盖。
+
+环境要求：
+
+- Windows 10/11 x64
+- .NET 10 SDK
+- Python 3
+- 已准备好的 `MBCCtools\deps`
+- 同级目录中的修改版 `MFAAvalonia` 源码
+
+先构建 MFAAvalonia：
+
+```powershell
+cd D:\a-maa-dev\MFAAvalonia
+dotnet publish .\MFAAvalonia.Desktop\MFAAvalonia.Desktop.csproj -c Release -r win-x64
+```
+
+当前 publish 输出通常位于：
+
+```text
+D:\a-maa-dev\MFAAvalonia\bin\AnyCPU\Release\win-x64\publish
+```
+
+然后回到 MBCCtools 根目录组装最终桌面目录：
+
+```powershell
+cd D:\a-maa-dev\MBCCtools
+.\build_local_gui.ps1 `
+  -BaseDir "D:\a-maa-dev\MFAAvalonia\bin\AnyCPU\Release\win-x64\publish" `
+  -OutDir "D:\a-maa-dev\MBCCtools\build-local-final" `
+  -Version "v1.4.3-local.1"
+```
+
+首次全新组装后，再把本仓库内置的 MaaPipelineEditor 运行时复制到最终目录：
+
+```powershell
+New-Item -ItemType Directory -Force .\build-local-final\tools | Out-Null
+Copy-Item .\tools\MaaPipelineEditor .\build-local-final\tools\MaaPipelineEditor -Recurse -Force
+```
+
+最终直接运行：
+```text
+D:\a-maa-dev\MBCCtools\build-local-final\MFAAvalonia.exe
+```
+
+修改 `resource`、Pipeline 或 `interface.json` 后，可以重新执行上述组装命令。`build-local-final` 是本地运行目录，不需要提交到 Git。
+
+### 3. 构建 Android 版
+
+Android 版基于修改后的 [MaaFwApp](https://github.com/Aliothmoon/MaaFwApp)。当前测试环境要求：
+
+- Android SDK
+- 完整 JDK 17（需要 `jlink`）
+- Python 3
+- 同级目录中的修改版 `MaaFwApp` 源码
+- 真机后台模式使用 Shizuku 或 Root 授权
+
+项目已经提供构建脚本：
+
+```text
+android\build-android.ps1
+```
+
+构建普通 arm64 真机 Debug APK：
+
+```powershell
+cd D:\a-maa-dev\MBCCtools
+powershell -ExecutionPolicy Bypass -File .\android\build-android.ps1 `
+  -MaaFwAppDir "D:\a-maa-dev\MaaFwApp" `
+  -AndroidSdk "D:\Android\Sdk"
+```
+构建 MuMu 等 x86_64 模拟器测试包：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\android\build-android.ps1 `
+  -MaaFwAppDir "D:\a-maa-dev\MaaFwApp" `
+  -AndroidSdk "D:\Android\Sdk" `
+  -Emulator
+```
+
+脚本会自动把 MBCCtools 的 `interface.json` 和 `resource/**` 打进 APK，输出统一放在：
+
+```text
+android\output\
+```
+
+常用输出文件：
+
+```text
+MBCCtools-debug-arm64.apk          # Android 真机
+MBCCtools-debug-arm64-x86_64.apk   # MuMu/模拟器测试
+```
+
+如需尝试 Release 构建可增加 `-Release`；正式发布前还需要自行确认 Android 签名配置。APK 建议作为 GitHub Release 附件发布，不要直接提交进 Git 仓库。
+
+### 4. 清理构建缓存
+
+为了节省磁盘空间，可以随时删除以下目录，不会影响 Git 源码或以后拉取上游更新：
+```text
+MFAAvalonia\**\bin
+MFAAvalonia\**\obj
+MaaFwApp\**\build
+```
+
+删除后，下次重新执行 `dotnet publish` 或 `android\build-android.ps1` 即可恢复。
 
 ## 开发相关
 

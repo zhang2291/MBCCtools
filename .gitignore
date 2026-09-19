@@ -450,3 +450,13 @@ tools/ImageCropper/**/*.png
 config
 temp_res/
 debug
+# Bundled MaaPipelineEditor runtime required by the local Pipeline Editor.
+# Keep repository-wide exe/dll/bin/config ignores, but include this self-contained tool.
+!tools/MaaPipelineEditor/mpelb.exe
+!tools/MaaPipelineEditor/runtime/maafw/
+!tools/MaaPipelineEditor/runtime/maafw/**
+
+# Local Android test artifacts (keep out of Git; publish APKs as release assets)
+android/temp/
+android/output/
+!android/build-android.ps1

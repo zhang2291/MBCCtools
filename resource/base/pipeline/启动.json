@@ -1,18 +1,20 @@
 {
-    "登录前处理": {
-        "action": {
-            "type": "DoNothing",
+    "一般弹窗": {
+        "recognition": {
+            "type": "TemplateMatch",
             "param": {
-                "timeout": 30000
+                "template": [
+                    "弹窗关闭按钮.png"
+                ]
             }
         },
-        "next": [
-            "登录",
-            "[JumpBack]关闭公告"
-        ],
-        "on_error": [
-            "登录前异常处理"
-        ]
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 1500,
+        "focus": {
+            "Node.Action.Succeeded": "关闭一般弹窗"
+        }
     },
     "关闭公告": {
         "recognition": {
@@ -43,40 +45,104 @@
             "Node.Action.Succeeded": "关闭公告"
         }
     },
-    "登录": {
+    "关闭公告_异常处理": {
         "recognition": {
             "type": "OCR",
             "param": {
-                "expected": "进入管理局"
+                "roi": [
+                    234,
+                    12,
+                    876,
+                    698
+                ],
+                "expected": "公告"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    12,
+                    15,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_delay": 600
+    },
+    "关闭界面1": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": "获取物资.png"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1208,
+                    366,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_wait_freezes": 600,
+        "next": [
+            "点击"
+        ]
+    },
+    "刮刮乐": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    432,
+                    21,
+                    425,
+                    115
+                ],
+                "expected": [
+                    "福"
+                ]
             }
         },
         "action": {
             "type": "Click"
         },
-        "post_delay": 4000,
-        "focus": {
-            "Node.Action.Succeeded": "点击登录"
-        },
+        "post_delay": 600,
         "next": [
-            "登录后处理"
+            "第一次滑动"
         ]
     },
-    "登录后处理": {
-        "action": {
-            "type": "DoNothing",
+    "前往补测": {
+        "recognition": {
+            "type": "OCR",
             "param": {
-                "timeout": 15000
+                "expected": [
+                    "前往补测"
+                ]
             }
         },
+        "action": {
+            "type": "Click"
+        },
         "next": [
-            "[JumpBack]登录",
-            "[JumpBack]刮刮乐",
-            "[JumpBack]情绪检测",
-            "[JumpBack]禁闭者生日",
-            "[JumpBack]月卡提示 - 取消",
-            "[JumpBack]月卡",
-            "[JumpBack]一般弹窗",
-            "首页"
+            "情绪检测"
+        ]
+    },
+    "启动": {
+        "action": {
+            "type": "StartApp",
+            "param": {
+                "package": "com.zy.wqmt.cn"
+            }
+        },
+        "post_delay": 3000,
+        "next": [
+            "登录前处理"
         ]
     },
     "情绪检测": {
@@ -138,12 +204,41 @@
         },
         "post_wait_freezes": 1500
     },
-    "前往补测": {
+    "月卡": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    491,
+                    443,
+                    310,
+                    84
+                ],
+                "expected": "剩余"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    898,
+                    475,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_wait_freezes": 1200,
+        "next": [
+            "关闭界面"
+        ]
+    },
+    "月卡提示 - 取消": {
         "recognition": {
             "type": "OCR",
             "param": {
                 "expected": [
-                    "前往补测"
+                    "取消"
                 ]
             }
         },
@@ -151,7 +246,130 @@
             "type": "Click"
         },
         "next": [
-            "情绪检测"
+            "点击取消"
+        ]
+    },
+    "点击": {
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1230,
+                    315,
+                    1,
+                    1
+                ]
+            }
+        }
+    },
+    "点击取消": {
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": "月卡提示 - 取消"
+            }
+        }
+    },
+    "生日日历": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    945,
+                    4,
+                    275,
+                    79
+                ],
+                "expected": "日历"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    43,
+                    41,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_wait_freezes": 1200
+    },
+    "登录": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": "进入管理局"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 4000,
+        "focus": {
+            "Node.Action.Succeeded": "点击登录"
+        },
+        "next": [
+            "登录后处理"
+        ]
+    },
+    "登录_异常处理": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": "进入管理局"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 4000
+    },
+    "登录前处理": {
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 10000
+            }
+        },
+        "next": [
+            "登录",
+            "[JumpBack]关闭公告"
+        ],
+        "on_error": [
+            "登录前异常处理"
+        ]
+    },
+    "登录前异常处理": {
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 10000
+            }
+        },
+        "next": [
+            "[JumpBack]关闭公告_异常处理",
+            "都没有",
+            "[JumpBack]登录_异常处理"
+        ]
+    },
+    "登录后处理": {
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 5000
+            }
+        },
+        "next": [
+            "[JumpBack]登录",
+            "[JumpBack]刮刮乐",
+            "[JumpBack]情绪检测",
+            "[JumpBack]禁闭者生日",
+            "[JumpBack]月卡提示 - 取消",
+            "[JumpBack]月卡",
+            "[JumpBack]一般弹窗",
+            "首页"
         ]
     },
     "禁闭者生日": {
@@ -197,232 +415,6 @@
         },
         "next": [
             "生日日历"
-        ]
-    },
-    "生日日历": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "roi": [
-                    945,
-                    4,
-                    275,
-                    79
-                ],
-                "expected": "日历"
-            }
-        },
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": [
-                    43,
-                    41,
-                    1,
-                    1
-                ]
-            }
-        },
-        "post_wait_freezes": 1200
-    },
-    "月卡提示 - 取消": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "expected": [
-                    "取消"
-                ]
-            }
-        },
-        "action": {
-            "type": "Click"
-        },
-        "next": [
-            "点击取消"
-        ]
-    },
-    "点击取消": {
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": "月卡提示 - 取消"
-            }
-        }
-    },
-    "月卡": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "expected": "剩余",
-                "roi": [491, 443, 310, 84]
-            }
-        },
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": [898, 475, 1, 1]
-            }
-        },
-        "post_wait_freezes": 1200,
-        "next": [
-            "关闭界面"
-        ]
-    },
-    "一般弹窗": {
-        "recognition": {
-            "type": "TemplateMatch",
-            "param": {
-                "template": [
-                    "弹窗关闭按钮.png"
-                ]
-            }
-        },
-        "action": {
-            "type": "Click"
-        },
-        "post_wait_freezes": 1500,
-        "focus": {
-            "Node.Action.Succeeded": "关闭一般弹窗"
-        }
-    },
-    "首页": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "roi": [
-                    1018,
-                    422,
-                    34,
-                    40
-                ],
-                "expected": [
-                    "禁"
-                ]
-            }
-        },
-        "pre_delay": 1000,
-        "action": {
-            "type": "DoNothing",
-            "param": {
-                "timeout": 3000
-            }
-        },
-        "next": [
-            "首页检查2"
-        ],
-        "on_error": [
-            "登录后处理"
-        ]
-    },
-    "首页检查2": {
-        "recognition": {
-            "type": "TemplateMatch",
-            "param": {
-                "roi": [
-                    269,
-                    465,
-                    92,
-                    137
-                ],
-                "template": [
-                    "首页2.png"
-                ]
-            }
-        },
-        "timeout": 3000,
-        "focus": {
-            "Node.Recognition.Succeeded": "确认到首页"
-        }
-    },
-    "登录_异常处理": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "expected": "进入管理局"
-            }
-        },
-        "action": {
-            "type": "Click"
-        },
-        "post_delay": 4000
-    },
-    "关闭公告_异常处理": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "roi": [
-                    234,
-                    12,
-                    876,
-                    698
-                ],
-                "expected": "公告"
-            }
-        },
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": [
-                    12,
-                    15,
-                    1,
-                    1
-                ]
-            }
-        },
-        "post_delay": 600
-    },
-    "登录前异常处理": {
-        "action": {
-            "type": "DoNothing",
-            "param": {
-                "timeout": 30000
-            }
-        },
-        "next": [
-            "[JumpBack]关闭公告_异常处理",
-            "都没有",
-            "[JumpBack]登录_异常处理"
-        ]
-    },
-    "都没有": {
-        "next": [
-            "登录后处理"
-        ]
-    },
-    "启动": {
-        "action": {
-            "type": "StartApp",
-            "param": {
-                "package": "com.zy.wqmt.cn"
-            }
-        },
-        "post_delay": 3000,
-        "next": [
-            "登录前处理"
-        ]
-    },
-    "刮刮乐": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "roi": [
-                    432,
-                    21,
-                    425,
-                    115
-                ],
-                "expected": [
-                    "福"
-                ]
-            }
-        },
-        "action": {
-            "type": "Click"
-        },
-        "post_delay": 600,
-        "next": [
-            "第一次滑动"
         ]
     },
     "第一次滑动": {
@@ -475,40 +467,58 @@
             "关闭界面1"
         ]
     },
-    "点击": {
-        "action": {
-            "type": "Click",
+    "都没有": {
+        "next": [
+            "登录后处理"
+        ]
+    },
+    "首页": {
+        "recognition": {
+            "type": "OCR",
             "param": {
-                "target": [
-                    1230,
-                    315,
-                    1,
-                    1
+                "roi": [
+                    1018,
+                    422,
+                    34,
+                    40
+                ],
+                "expected": [
+                    "禁"
                 ]
             }
-        }
+        },
+        "pre_delay": 1000,
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 3000
+            }
+        },
+        "next": [
+            "首页检查2"
+        ],
+        "on_error": [
+            "登录后处理"
+        ]
     },
-    "关闭界面1": {
+    "首页检查2": {
         "recognition": {
             "type": "TemplateMatch",
             "param": {
-                "template": "获取物资.png"
-            }
-        },
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": [
-                    1208,
-                    366,
-                    1,
-                    1
+                "roi": [
+                    269,
+                    465,
+                    92,
+                    137
+                ],
+                "template": [
+                    "首页2.png"
                 ]
             }
         },
-        "post_wait_freezes": 600,
-        "next": [
-            "点击"
-        ]
+        "timeout": 3000,
+        "focus": {
+            "Node.Recognition.Succeeded": "确认到首页"
+        }
     }
 }

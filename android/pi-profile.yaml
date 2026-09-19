@@ -1,0 +1,15 @@
+# MBCCtools -> MaaFwApp Android 打包配方
+# 资源项目根目录（相对本文件）
+assets: ..
+
+# 只把 Android 运行真正需要的 PI 和资源打进 APK
+include:
+  - interface.json
+  - resource/**
+
+exclude: []
+
+app:
+  id: mbcctools
+  label: MBCCtools
+  icon: app-icon.png
