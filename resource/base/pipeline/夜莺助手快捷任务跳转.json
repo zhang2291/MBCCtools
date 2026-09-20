@@ -69,6 +69,11 @@
         "post_delay": 700,
         "next": [
             "关闭界面"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别免费礼包": {
@@ -100,6 +105,11 @@
         "post_delay": 1200,
         "next": [
             "每日体力"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别友情点": {
@@ -131,6 +141,11 @@
         "post_delay": 1200,
         "next": [
             "领取友情点"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别新邮件": {
@@ -162,6 +177,11 @@
         "post_delay": 1200,
         "next": [
             "领取邮件"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别派遣": {
@@ -193,6 +213,11 @@
         "post_delay": 1200,
         "next": [
             "派遣区域选择"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别浊暗之阱": {
@@ -226,9 +251,15 @@
             "浊暗之阱扫荡",
             "乐园",
             "浊暗之阱入口"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别监管事件": {
+        "max_hit": 1,
         "recognition": {
             "type": "OCR",
             "param": {
@@ -247,17 +278,20 @@
             "type": "Click",
             "param": {
                 "target": [
-                    1169,
-                    240,
-                    51,
-                    38
+                    1177,
+                    245,
+                    39,
+                    25
                 ]
             }
         },
         "post_delay": 1200,
         "next": [
-            "开始按钮",
-            "监管终端"
+            "开始按钮"
+        ],
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别监管系统": {
@@ -289,6 +323,11 @@
         "post_delay": 700,
         "next": [
             "关闭界面"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别秘盟捐赠": {
@@ -320,6 +359,11 @@
         "post_delay": 1200,
         "next": [
             "秘盟流程开始"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
         ]
     },
     "识别记忆风暴": {
@@ -351,6 +395,91 @@
         "post_delay": 1200,
         "next": [
             "记忆风暴优先选择"
+        ],
+        "max_hit": 1,
+        "timeout": 5000,
+        "on_error": [
+            "夜莺容错_恢复"
+        ]
+    },
+    "夜莺容错_恢复": {
+        "timeout": 4000,
+        "rate_limit": 500,
+        "next": [
+            "夜莺容错_首页继续",
+            "[JumpBack]夜莺容错_回首页"
+        ],
+        "on_error": [
+            "结束任务"
+        ]
+    },
+    "夜莺容错_回首页": {
+        "max_hit": 2,
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "主菜单.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 1200
+    },
+    "夜莺容错_首页继续": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    269,
+                    465,
+                    92,
+                    137
+                ],
+                "template": [
+                    "首页2.png"
+                ]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "timeout": 3000,
+        "next": [
+            "夜莺容错_助手模式入口点击"
+        ],
+        "on_error": [
+            "结束任务"
+        ]
+    },
+    "夜莺容错_助手模式入口点击": {
+        "max_hit": 2,
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1095,
+                    652,
+                    148,
+                    51
+                ],
+                "expected": [
+                    "助手模式"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 1000,
+        "next": [
+            "夜莺助手快捷任务跳转"
         ]
     }
 }

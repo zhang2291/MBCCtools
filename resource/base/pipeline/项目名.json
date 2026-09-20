@@ -69,14 +69,17 @@
             "type": "Click",
             "param": {
                 "target": [
-                    1208,
-                    366,
-                    1,
-                    1
+                    560,
+                    492,
+                    106,
+                    54
                 ]
             }
         },
-        "post_wait_freezes": 300
+        "post_wait_freezes": {
+            "time": 1000,
+            "timeout": 5000
+        }
     },
     "副本未开放": {
         "recognition": {
