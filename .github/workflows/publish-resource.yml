@@ -1,0 +1,92 @@
+name: publish-resource
+
+on:
+  push:
+    tags:
+      - "resource-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tagged resources
+        uses: actions/checkout@v4
+
+      - name: Validate JSON
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = [Path("interface.json"), *Path("resource").rglob("*.json")]
+          files = [path for path in files if path.name != "default_pipeline.json"]
+          for path in files:
+              with path.open("r", encoding="utf-8") as f:
+                  json.load(f)
+          print(f"validated {len(files)} json files")
+          PY
+      - name: Build resource package and manifest
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p dist/package
+          cp interface.json dist/package/interface.json
+          cp -R resource dist/package/resource
+          (
+            cd dist/package
+            zip -qr ../MBCCtools-resource.zip interface.json resource
+          )
+          SHA256=$(sha256sum dist/MBCCtools-resource.zip | awk '{print $1}')
+          ASSET_URL="https://github.com/${REPO}/releases/download/${TAG}/MBCCtools-resource.zip"
+          python - "$TAG" "$ASSET_URL" "$SHA256" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          tag, asset_url, sha256 = sys.argv[1:]
+          data = {
+              "version": tag.removeprefix("resource-v"),
+              "tag": tag,
+              "asset_url": asset_url,
+              "sha256": sha256,
+          }
+          Path("dist/resource-update.json").write_text(
+              json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Publish resource prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          generate_release_notes: false
+          body: |
+            MBCCtools 资源更新包，仅包含 interface.json 与 resource/**。
+            手机端“资源更新”会读取 resource-manifest 分支中的清单并下载此资源包。
+          files: |
+            dist/MBCCtools-resource.zip
+            dist/resource-update.json
+
+      - name: Publish static resource manifest branch
+        shell: bash
+        run: |
+          cp dist/resource-update.json "$RUNNER_TEMP/resource-update.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin resource-manifest >/dev/null 2>&1; then
+            git fetch origin resource-manifest
+            git checkout -B resource-manifest origin/resource-manifest
+          else
+            git checkout --orphan resource-manifest
+            git rm -rf .
+          fi
+          cp "$RUNNER_TEMP/resource-update.json" resource-update.json
+          git add resource-update.json
+          git commit -m "resource: update manifest to $GITHUB_REF_NAME"
+          git push origin HEAD:resource-manifest

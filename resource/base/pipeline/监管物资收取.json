@@ -1,0 +1,88 @@
+{
+  "监管物资收取": {
+    "next": [
+      "监管收菜执行",
+      "监管收菜入口",
+      "[JumpBack]整备中心",
+      "[JumpBack]主菜单",
+      "[JumpBack]返回按钮"
+    ]
+  },
+  "监管收菜入口": {
+    "recognition": {
+      "type": "OCR",
+      "param": {
+        "roi": [957, 379, 116, 86],
+        "expected": "监管"
+      }
+    },
+    "action": {
+      "type": "Click"
+    },
+    "post_delay": 1200,
+    "focus": {
+      "Node.Action.Succeeded": "进入监管界面，仅收取物资"
+    },
+    "next": [
+      "监管收菜执行"
+    ]
+  },
+  "监管收菜执行": {
+    "recognition": {
+      "type": "TemplateMatch",
+      "param": {
+        "roi": [21, 85, 209, 294],
+        "template": "一键收取.png"
+      }
+    },
+    "action": {
+      "type": "Click",
+      "param": {
+        "target": [139, 342, 1, 1]
+      }
+    },
+    "post_delay": 1200,
+    "timeout": 3000,
+    "focus": {
+      "Node.Action.Succeeded": "收取监管物资"
+    },
+    "next": [
+      "监管收菜关闭奖励",
+      "监管收菜返回主页"
+    ],
+    "on_error": [
+      "监管收菜返回主页"
+    ]
+  },
+  "监管收菜关闭奖励": {
+    "recognition": {
+      "type": "TemplateMatch",
+      "param": {
+        "template": "获取物资.png"
+      }
+    },
+    "action": {
+      "type": "Click",
+      "param": {
+        "target": [560, 492, 106, 54]
+      }
+    },
+    "post_wait_freezes": {
+      "time": 1000,
+      "timeout": 5000
+    },
+    "timeout": 3000,
+    "next": [
+      "监管收菜返回主页"
+    ],
+    "on_error": [
+      "监管收菜返回主页"
+    ]
+  },
+  "监管收菜返回主页": {
+    "next": [
+      "主菜单",
+      "[JumpBack]返回按钮"
+    ]
+  }
+}

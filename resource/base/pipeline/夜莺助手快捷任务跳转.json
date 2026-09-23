@@ -70,7 +70,7 @@
         "next": [
             "关闭界面"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -106,7 +106,7 @@
         "next": [
             "每日体力"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -142,7 +142,7 @@
         "next": [
             "领取友情点"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -178,7 +178,7 @@
         "next": [
             "领取邮件"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -214,7 +214,7 @@
         "next": [
             "派遣区域选择"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -252,14 +252,14 @@
             "乐园",
             "浊暗之阱入口"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
         ]
     },
     "识别监管事件": {
-        "max_hit": 1,
+        "max_hit": 3,
         "recognition": {
             "type": "OCR",
             "param": {
@@ -324,7 +324,7 @@
         "next": [
             "关闭界面"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -360,7 +360,7 @@
         "next": [
             "秘盟流程开始"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
@@ -396,7 +396,7 @@
         "next": [
             "记忆风暴优先选择"
         ],
-        "max_hit": 1,
+        "max_hit": 3,
         "timeout": 5000,
         "on_error": [
             "夜莺容错_恢复"
