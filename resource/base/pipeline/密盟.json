@@ -107,6 +107,7 @@
             "type": "Click"
         },
         "post_delay": 600,
+        "timeout": 3000,
         "focus": {
             "Node.Recognition.Starting": "开始捐赠"
         },
@@ -114,7 +115,6 @@
             "捐赠完成",
             "捐赠"
         ],
-        "timeout": 3000,
         "on_error": [
             "主菜单"
         ]
@@ -140,21 +140,7 @@
             "主菜单"
         ]
     },
-    "秘盟流程开始": {
-        "recognition": {
-            "type": "DirectHit"
-        },
-        "timeout": 4000,
-        "next": [
-            "秘盟进入奖励确认",
-            "密盟签到",
-            "捐赠入口"
-        ],
-        "on_error": [
-            "主菜单"
-        ]
-    },
-    "秘盟进入奖励确认": {
+    "秘盟捐赠奖励确认": {
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -174,17 +160,16 @@
         },
         "post_wait_freezes": 300,
         "next": [
-            "秘盟签到检查"
+            "捐赠完成"
         ]
     },
-    "秘盟签到检查": {
-        "recognition": {
-            "type": "DirectHit"
-        },
-        "timeout": 3000,
+    "秘盟流程开始": {
+        "timeout": 4000,
         "next": [
+            "秘盟进入奖励确认",
             "密盟签到",
-            "捐赠入口"
+            "捐赠入口",
+            "捐赠"
         ],
         "on_error": [
             "主菜单"
@@ -213,7 +198,17 @@
             "捐赠入口"
         ]
     },
-    "秘盟捐赠奖励确认": {
+    "秘盟签到检查": {
+        "timeout": 3000,
+        "next": [
+            "密盟签到",
+            "捐赠入口"
+        ],
+        "on_error": [
+            "主菜单"
+        ]
+    },
+    "秘盟进入奖励确认": {
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -233,7 +228,7 @@
         },
         "post_wait_freezes": 300,
         "next": [
-            "捐赠完成"
+            "秘盟签到检查"
         ]
     }
 }
