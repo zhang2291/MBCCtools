@@ -28,32 +28,6 @@
             "浊暗之阱扫荡"
         ]
     },
-    "关闭禁闭者选择界面": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "roi": [
-                    387,
-                    122,
-                    176,
-                    74
-                ],
-                "expected": "禁闭者"
-            }
-        },
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": [
-                    53,
-                    302,
-                    1,
-                    1
-                ]
-            }
-        },
-        "post_delay": 1200
-    },
     "内海入口": {
         "recognition": {
             "type": "OCR",
@@ -180,7 +154,6 @@
         "post_delay": 1200,
         "next": [
             "[JumpBack]关闭界面",
-            "[JumpBack]关闭禁闭者选择界面",
             "主菜单"
         ]
     }

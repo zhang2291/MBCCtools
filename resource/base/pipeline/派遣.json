@@ -1,4 +1,75 @@
 {
+    "发出派遣": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    997,
+                    492,
+                    279,
+                    124
+                ],
+                "expected": [
+                    "键派遣"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 1200,
+        "focus": {
+            "Node.Action.Succeeded": "一键派遣完成"
+        },
+        "next": [
+            "主菜单"
+        ]
+    },
+    "开始派遣": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    478,
+                    433,
+                    176,
+                    82
+                ],
+                "expected": "派遣"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 600,
+        "focus": {
+            "Node.Action.Succeeded": "进入派遣界面"
+        },
+        "next": [
+            "派遣区域选择"
+        ]
+    },
+    "收集派遣奖励": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1017,
+                    516,
+                    238,
+                    69
+                ],
+                "expected": "一键领取"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 600,
+        "next": [
+            "关闭界面"
+        ]
+    },
     "派遣": {
         "next": [
             "开始派遣",
@@ -9,71 +80,26 @@
             "[JumpBack]返回按钮"
         ]
     },
-    "开始派遣": {
-        "recognition": "OCR",
-        "expected": "派遣",
-        "roi": [
-            478,
-            433,
-            176,
-            82
-        ],
-        "action": "Click",
-        "focus": {
-            "Node.Action.Succeeded": "进入派遣界面"
-        },
-        "post_delay": 600,
-        "next": [
-            "派遣区域选择"
-        ]
-    },
     "派遣区域选择": {
-        "recognition": "OCR",
-        "expected": "每日任务",
-        "roi": [
-            66,
-            641,
-            1159,
-            65
-        ],
-        "action": "Click",
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    66,
+                    641,
+                    1159,
+                    65
+                ],
+                "expected": "每日任务"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
         "post_delay": 600,
         "next": [
             "发出派遣",
             "[JumpBack]收集派遣奖励"
-        ]
-    },
-    "收集派遣奖励": {
-        "recognition": "OCR",
-        "expected": "一键领取",
-        "roi": [
-            1017,
-            516,
-            238,
-            69
-        ],
-        "action": "Click",
-        "post_delay": 600,
-        "next": [
-            "关闭界面"
-        ]
-    },
-    "发出派遣": {
-        "recognition": "OCR",
-        "expected": "一键派遣",
-        "roi": [
-            1016,
-            512,
-            247,
-            79
-        ],
-        "action": "Click",
-        "focus": {
-            "Node.Action.Succeeded": "一键派遣完成"
-        },
-        "post_wait_freezes": 1200,
-        "next": [
-            "主菜单"
         ]
     }
 }
