@@ -25,6 +25,12 @@ $jdkCandidates = @(
     (Test-Path (Join-Path $_ 'bin\java.exe')) -and
     (Test-Path (Join-Path $_ 'bin\jlink.exe'))
 }
+if (-not $jdkCandidates -and (Get-Command mise -ErrorAction SilentlyContinue)) {
+    $miseJdk = & mise where java@17.0.12 2>$null
+    if ($LASTEXITCODE -eq 0 -and (Test-Path (Join-Path $miseJdk 'bin/jlink.exe'))) {
+        $jdkCandidates = @($miseJdk.Trim())
+    }
+}
 if (-not $jdkCandidates) { throw 'Full JDK 17+ with jlink not found.' }
 $env:JAVA_HOME = @($jdkCandidates)[0]
 $env:Path = "$($env:JAVA_HOME)\bin;$env:Path"
@@ -50,6 +56,20 @@ if ($needFrameworkSetup) {
     & python (Join-Path $MaaFwAppDir 'scripts\setup_maa_framework.py') --abi $setupAbi
     if ($LASTEXITCODE -ne 0) { throw 'MaaFramework setup failed.' }
 }
+
+# Agent binding must match the framework bundled into this APK.
+$frameworkVersion = (Get-Content (Join-Path $MaaFwAppDir '.maafwversion') -Raw).Trim().TrimStart('v')
+$agentDir = Join-Path $PSScriptRoot 'agent-runtime'
+$agentManifest = Join-Path $agentDir 'arm64-v8a/bundle/agent-core.json'
+if (-not (Test-Path $agentManifest)) {
+    & python (Join-Path $MaaFwAppDir 'scripts/build_agent_bundle.py') --out $agentDir --core-tag "3.13.15-maafw$frameworkVersion" --require openpyxl==3.1.5
+    if ($LASTEXITCODE -ne 0) { throw 'Android Agent runtime preparation failed.' }
+}
+$manifest = Get-Content $agentManifest -Raw | ConvertFrom-Json
+if ($manifest.provides.maafw -ne $frameworkVersion) {
+    throw "Agent runtime/framework mismatch. Rebuild android/agent-runtime for MaaFw $frameworkVersion."
+}
+if ($Emulator) { throw 'The gacha agent profile currently targets arm64-v8a phones only.' }
 
 Push-Location $MaaFwAppDir
 try {

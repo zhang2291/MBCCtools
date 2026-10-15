@@ -35,10 +35,10 @@ Write-Host "Validated $($jsonFiles.Count) JSON files."
 
 $tag = 'resource-v' + (Get-Date -Format 'yyyyMMdd-HHmmss')
 if (-not $UseCurrentCommit) {
-    git add -- interface.json resource .github/workflows/publish-resource.yml publish-resource.ps1
+    git add -- interface.json resource agent .github/workflows/publish-resource.yml publish-resource.ps1
     Assert-GitSuccess 'Stage resources'
 
-    git diff --cached --quiet -- interface.json resource
+    git diff --cached --quiet -- interface.json resource agent
     if ($LASTEXITCODE -eq 0) {
         throw 'No interface.json/resource changes to publish. Use -UseCurrentCommit to release the current commit.'
     }

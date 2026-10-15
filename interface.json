@@ -109,6 +109,19 @@
         "B服",
         "国际服"
       ]
+    },
+    {
+      "name": "抽卡记录",
+      "entry": "抽卡记录",
+      "option": [
+        "识别方式"
+      ],
+      "doc": "先手动进入游戏的抽卡记录页，只勾选本任务运行。按当前追踪类型采集；换类型后再次运行。手机首页「抽卡记录」查看、导入或导出。首次建议完整识别；记录不随资源更新清除。当前模板适用于中文界面、1280×720 识别画面。",
+      "default_check": false,
+      "resource": [
+        "官服",
+        "B服"
+      ]
     }
   ],
   "option": {
@@ -538,7 +551,97 @@
       ],
       "default_case": "不领取等级奖励",
       "type": "select"
+    },
+    "识别方式": {
+      "cases": [
+        {
+          "name": "完整识别",
+          "pipeline_override": {
+            "抽卡记录_单页识别": {
+              "recognition": {
+                "param": {
+                  "custom_recognition_param": {
+                    "archive": "record/抽卡记录",
+                    "min_score": 0.5,
+                    "line_tol": 14,
+                    "badge_x": [
+                      856,
+                      908
+                    ],
+                    "rarity_dir": "抽卡",
+                    "rarity_tiers": [
+                      "狂",
+                      "危",
+                      "普"
+                    ],
+                    "gate_roi": [
+                      414,
+                      218,
+                      425,
+                      60
+                    ],
+                    "page_roi": [
+                      735,
+                      625,
+                      65,
+                      36
+                    ],
+                    "max_pages": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "识别到已知停止",
+          "pipeline_override": {
+            "抽卡记录_单页识别": {
+              "recognition": {
+                "param": {
+                  "custom_recognition_param": {
+                    "archive": "record/抽卡记录",
+                    "min_score": 0.5,
+                    "line_tol": 14,
+                    "badge_x": [
+                      856,
+                      908
+                    ],
+                    "rarity_dir": "抽卡",
+                    "rarity_tiers": [
+                      "狂",
+                      "危",
+                      "普"
+                    ],
+                    "gate_roi": [
+                      414,
+                      218,
+                      425,
+                      60
+                    ],
+                    "page_roi": [
+                      735,
+                      625,
+                      65,
+                      36
+                    ],
+                    "max_pages": 200,
+                    "stop_on_known": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "- **完整识别**：从第 1 页翻完整份列表，逐行去重、只补没见过的记录；不会漏页，较慢\n- **识别到已知停止**：撞见已入库的记录就停；快，适合刚抽完卡补记录"
     }
   },
-  "github": "https://github.com/zhang2291/MBCCtools"
+  "github": "https://github.com/zhang2291/MBCCtools",
+  "agent": {
+    "child_exec": "python",
+    "child_args": [
+      "./agent/main.py"
+    ]
+  }
 }

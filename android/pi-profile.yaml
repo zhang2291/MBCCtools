@@ -6,10 +6,26 @@ assets: ..
 include:
   - interface.json
   - resource/**
+  - agent/**
 
-exclude: []
+exclude:
+  - agent/**/__pycache__/**
+  - agent/**/*.pyc
 
 app:
   id: mbcctools
   label: MBCCtools
   icon: app-icon.png
+
+agent:
+  sourceDir: agent-runtime
+  abi: [arm64-v8a]
+  runtimes:
+    - location: bundle
+      executable: bin/python3
+      args: [-u, agent/main.py]
+      env:
+        MAAFW_BINARY_PATH: "{nativeLibs}"
+        PYTHONHOME: "{bundle}/prefix"
+        PYTHONPATH: "{bundle}/site-packages:{bundle}/site-packages/pure.zip"
+        LD_LIBRARY_PATH: "{bundle}/prefix/lib:{bundle}/site-packages/numpy.libs:{nativeLibs}"

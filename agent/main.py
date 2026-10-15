@@ -6,6 +6,8 @@ from maa.toolkit import Toolkit
 from custom import action
 from custom import reco
 
+import gacha  # Registers the gacha-only Custom nodes.
+
 
 def main():
     Toolkit.init_option("./")

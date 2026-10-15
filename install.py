@@ -49,6 +49,12 @@ def install_resource():
         working_dir / "interface.json",
         install_path,
     )
+    shutil.copytree(
+        working_dir / "agent",
+        install_path / "agent",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        dirs_exist_ok=True,
+    )
 
     with open(install_path / "interface.json", "r", encoding="utf-8") as f:
         interface = json.load(f)

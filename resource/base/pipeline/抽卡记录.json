@@ -1,0 +1,161 @@
+{
+    "抽卡记录": {
+        "next": [
+            "抽卡记录_开始采集"
+        ]
+    },
+    "抽卡记录_开始采集": {
+        "recognition": {
+            "type": "DirectHit"
+        },
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "GachaRecordBeginRun",
+                "custom_action_param": {
+                    "archive": "record/抽卡记录"
+                }
+            }
+        },
+        "next": [
+            "抽卡记录_识别追踪类型"
+        ]
+    },
+    "抽卡记录_识别追踪类型": {
+        "recognition": {
+            "type": "Custom",
+            "param": {
+                "custom_recognition": "GachaRecordPoolType",
+                "custom_recognition_param": {
+                    "archive": "record/抽卡记录",
+                    "min_score": 0.5
+                },
+                "roi": [414, 218, 425, 60]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "timeout": 3000,
+        "on_error": [
+            "抽卡记录汇总"
+        ],
+        "next": [
+            "抽卡记录_回首页",
+            "抽卡记录_单页识别"
+        ]
+    },
+    "抽卡记录_回首页": {
+        "recognition": {
+            "type": "Custom",
+            "param": {
+                "custom_recognition": "GachaRecordFirstPage",
+                "custom_recognition_param": {
+                    "archive": "record/抽卡记录",
+                    "min_score": 0.5,
+                    "line_tol": 14,
+                    "badge_x": [856, 908],
+                    "gate_roi": [414, 218, 425, 60]
+                },
+                "roi": [440, 275, 640, 350]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [711, 645, 1, 1]
+            }
+        },
+        "post_wait_freezes": 800,
+        "max_hit": 100,
+        "timeout": 5000,
+        "on_error": [
+            "抽卡记录汇总"
+        ],
+        "next": [
+            "抽卡记录_回首页",
+            "抽卡记录_单页识别"
+        ]
+    },
+    "抽卡记录_单页识别": {
+        "recognition": {
+            "type": "Custom",
+            "param": {
+                "custom_recognition": "GachaRecordPage",
+                "custom_recognition_param": {
+                    "archive": "record/抽卡记录",
+                    "min_score": 0.5,
+                    "line_tol": 14,
+                    "badge_x": [856, 908],
+                    "rarity_dir": "抽卡",
+                    "rarity_tiers": ["狂", "危", "普"],
+                    "gate_roi": [414, 218, 425, 60],
+                    "page_roi": [735, 625, 65, 36],
+                    "max_pages": 200
+                },
+                "roi": [440, 275, 640, 350]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "timeout": 3000,
+        "on_error": [
+            "抽卡记录汇总"
+        ],
+        "next": [
+            "抽卡记录翻页"
+        ]
+    },
+    "抽卡记录翻页": {
+        "recognition": {
+            "type": "DirectHit",
+            "param": {
+                "roi": [839, 646, 1, 1]
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 800,
+        "timeout": 8000,
+        "on_error": [
+            "抽卡记录汇总"
+        ],
+        "next": [
+            "抽卡记录_单页识别"
+        ]
+    },
+    "抽卡记录汇总": {
+        "recognition": {
+            "type": "DirectHit"
+        },
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "GachaRecordExport",
+                "custom_action_param": {
+                    "archive": "record/抽卡记录"
+                }
+            }
+        },
+        "next": []
+    },
+    "抽卡记录末页": {
+        "recognition": {
+            "type": "DirectHit"
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "focus": {
+            "Node.Action.Succeeded": {
+                "content": "已到达最后一页",
+                "display": ["log", "toast"]
+            }
+        },
+        "next": [
+            "抽卡记录汇总"
+        ]
+    }
+}

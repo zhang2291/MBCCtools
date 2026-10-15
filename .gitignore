@@ -460,3 +460,9 @@ debug
 android/temp/
 android/output/
 !android/build-android.ps1
+
+android/agent-runtime/
+data/
+agent/__pycache__/
+agent/**/__pycache__/
+tests/__pycache__/
