@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import uuid
 
 DEFAULTS = ['新角色', '限定', '联动', '常驻', '复刻']
@@ -49,12 +50,31 @@ class Records:
         self.save_catalog(categories + [category])
         return category
 
-    def delete(self, category_id):
+    def delete(self, category_id, permanent=False):
         category = self.category(category_id)
         categories = self.categories()
         if category_id != 'legacy' and len(categories) <= 1:
             raise ValueError('请至少保留一个池子类型')
         archive = self.archive(category_id)
+        if permanent:
+            # Validate every destructive target before deleting anything.
+            record_root = (self.root / 'record').resolve()
+            if not record_root.is_relative_to(self.root.resolve()):
+                raise ValueError('档案根目录指向外部位置，拒绝删除')
+            paths = [archive, archive.with_suffix('.xlsx'), archive.with_suffix('.md')]
+            for path in paths:
+                if path.is_symlink() or not path.resolve().is_relative_to(record_root):
+                    raise ValueError('档案路径超出数据目录，拒绝删除')
+            for path in paths:
+                if path.is_dir():
+                    shutil.rmtree(path)
+                elif path.exists():
+                    path.unlink()
+            if category_id == 'legacy':
+                (self.root / '.gacha-legacy-hidden').write_text('hidden', encoding='utf-8')
+            else:
+                self.save_catalog([c for c in categories if c['id'] != category_id])
+            return dict(permanent=True)
         backup = self.root / 'deleted-gacha' / (datetime.datetime.now().strftime('%Y%m%d-%H%M%S-') + uuid.uuid4().hex[:8])
         backup.mkdir(parents=True)
         (backup / 'category.json').write_text(json.dumps(category, ensure_ascii=False), encoding='utf-8')
@@ -222,12 +242,13 @@ def main():
     parser.add_argument('--name',default='')
     parser.add_argument('--path',default='')
     parser.add_argument('--pool',default='')
+    parser.add_argument('--permanent',action='store_true')
     args=parser.parse_args()
     records=Records(args.root)
     try:
         if args.operation=='snapshot': result=records.snapshot(args.category,args.pool)
         elif args.operation=='add': result=records.add(args.name)
-        elif args.operation=='delete': result=records.delete(args.category)
+        elif args.operation=='delete': result=records.delete(args.category, permanent=args.permanent)
         elif args.operation=='export': result=records.export(args.category,args.path,args.pool)
         else: result=records.import_excel(args.category,args.path)
         print(json.dumps(result,ensure_ascii=False))

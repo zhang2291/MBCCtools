@@ -70,6 +70,26 @@ class RecordsTest(unittest.TestCase):
         with self.assertRaises(ValueError):self.store.add('常驻')
         with self.assertRaises(StopIteration):self.store.archive('../outside')
 
+    def test_permanent_delete_removes_only_selected_records_and_reports(self):
+        self.write('default-0',[('甲','狂','A')])
+        self.write('default-1',[('乙','狂','B')])
+        archive=self.store.archive('default-0')
+        archive.with_suffix('.xlsx').write_bytes(b'test report')
+        archive.with_suffix('.md').write_text('test report',encoding='utf-8')
+        result=self.store.delete('default-0',permanent=True)
+        self.assertTrue(result['permanent'])
+        self.assertFalse(archive.exists())
+        self.assertFalse(archive.with_suffix('.xlsx').exists())
+        self.assertFalse(archive.with_suffix('.md').exists())
+        self.assertFalse((self.store.root/'deleted-gacha').exists())
+        self.assertEqual(1,len(self.store.read('default-1')))
+
+    def test_permanent_delete_rejects_last_category(self):
+        self.store.save_catalog([dict(id='only',name='唯一类型')])
+        self.write('only',[('甲','狂','A')])
+        with self.assertRaises(ValueError):self.store.delete('only',permanent=True)
+        self.assertEqual(1,len(self.store.read('only')))
+
     def test_same_second_multifile_roundtrip_preserves_details_and_intervals(self):
         archive=self.store.archive('default-0');archive.mkdir(parents=True)
         rows=[]
