@@ -21,20 +21,20 @@
             "type": "OCR",
             "param": {
                 "roi": [
-                    234,
-                    12,
-                    876,
-                    698
+                    150,
+                    110,
+                    980,
+                    95
                 ],
-                "expected": "公告"
+                "expected": "(系统|活动)公告"
             }
         },
         "action": {
             "type": "Click",
             "param": {
                 "target": [
-                    12,
-                    15,
+                    60,
+                    360,
                     1,
                     1
                 ]
@@ -50,20 +50,20 @@
             "type": "OCR",
             "param": {
                 "roi": [
-                    234,
-                    12,
-                    876,
-                    698
+                    150,
+                    110,
+                    980,
+                    95
                 ],
-                "expected": "公告"
+                "expected": "(系统|活动)公告"
             }
         },
         "action": {
             "type": "Click",
             "param": {
                 "target": [
-                    12,
-                    15,
+                    60,
+                    360,
                     1,
                     1
                 ]
@@ -489,17 +489,15 @@
         },
         "pre_delay": 1000,
         "action": {
-            "type": "DoNothing",
-            "param": {
-                "timeout": 3000
-            }
+            "type": "DoNothing"
         },
         "next": [
             "首页检查2"
         ],
         "on_error": [
             "登录后处理"
-        ]
+        ],
+        "timeout": 3000
     },
     "首页检查2": {
         "recognition": {
