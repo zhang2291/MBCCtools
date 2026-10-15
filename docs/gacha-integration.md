@@ -31,7 +31,11 @@ Android 保持 MaaFramework 5.13.1，使用 MaaAgentCoreAndroid `3.13.15-maafw5.
 
 正式发布顺序：先安装新 APK，再更新包含 agent 脚本的资源包。尚未向远程发布。
 
-桌面端源码入口使用 PATH 中的 Python，需要 MaaFw 与桌面 GUI 实际加载的 native 版本一致，并安装 numpy/openpyxl。Android runtime 不能复制给 Windows 使用。当前工作不替换已有 `build-local-final` 桌面测试包；在向该目录同步新增 interface 前必须配置桌面 Agent 解释器，避免影响日常任务启动。
+桌面端源码入口使用 PATH 中的 Python，需要 MaaFw 与桌面 GUI 实际加载的 native 版本一致，并安装 numpy/openpyxl。Android runtime 不能复制给 Windows 使用。
+
+2026-10-15 已按用户要求单独同步 `build-local-final`：保留其原有 124 个资源文件及既有任务/选项，仅追加抽卡相关资源、任务、选项和 Agent 注册。该测试包实际 native 版本为 5.12.3，因此包内独立部署 Python 3.13.7 + MaaFw 5.12.3 + openpyxl 3.1.5；本地 interface 的 child_exec 指向 `./agent/python/python.exe`，不依赖系统 Python。桌面 GUI 本身未增加查看页，结果在 `build-local-final/data/record/` 下查看 Excel/Markdown。
+
+同步前备份位于 `build-local-final/backup/gacha-setup-20261015-134703/`，含旧 interface、旧 agent、原资源 SHA256 清单和部署清单。实际加载测试包 native DLL，已通过桌面 IPC Agent 连接、黑屏零点击及人工单页 OCR→采集→导出→重复采集无新增测试。未操作游戏账号。已有桌面窗口需重新打开以加载新任务入口。
 
 ## 验证边界
 
