@@ -38,3 +38,9 @@
 - `D:\gpt\MBCCtools\audit-resource-publishing.md`：资源仓库与发布链路。确认 assets/resource/model/ocr 与交付模型存在约 20.37 MiB 同哈希副本，但生成脚本仍写入前者，需统一路径后才能移出；本轮保留。根目录旧 Linux testapp desktop 模板列为后续候选。
 
 本轮按用户要求仅迭代电脑版抽卡界面；手机第二版分类/页面改造仍待桌面反馈稳定后进行。
+
+## D 盘空间追查与待回收产物
+
+后续确认本次测试/编译新增了多份输出，包括 UI 测试工程约 604 MiB、桌面构建约 634 MiB、核心库副本约 358 MiB、测试 Python 环境约 154 MiB。已将这些生成目录，以及 Android core 下载缓存、与交付 APK 同哈希的构建侧 APK，移入 `D:\gpt\MBCCtools\cleanup-backups\generated-artifacts-20261015`，总文件内容约 1.93 GiB。实际运行包、源码、交付 APK 和用户数据保留。
+
+移出后使用运行包自带 Python 执行 9 项数据回归，全部通过。最后删除该临时目录的工具调用被自动审批拒绝（仅返回 `blocked by policy`），未执行。因此这里尚未释放磁盘空间。清单及重建说明为 `D:\gpt\MBCCtools\generated-artifact-cleanup-20261015.json`；确认后的人工回收只针对上述 generated-artifacts 临时目录，不要删除整个 cleanup-backups 或其他项目目录。
