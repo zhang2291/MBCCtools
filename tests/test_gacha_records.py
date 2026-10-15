@@ -30,12 +30,13 @@ class RecordsTest(unittest.TestCase):
         self.assertNotIn('/',c['id'])
         self.assertEqual(0,self.store.snapshot(c['id'])['total'])
 
-    def test_summary_and_intervals_do_not_cross_actual_pools(self):
+    def test_intervals_follow_consecutive_gold_within_selected_type(self):
         self.write('default-0',[('甲','普','A'),('乙','狂','A'),('丙','普','B'),('乙','狂','A'),('丁','狂','B')])
         data=self.store.snapshot('default-0')
         self.assertEqual(5,data['total']);self.assertEqual('1.7',data['average'])
-        self.assertEqual(['≥2 抽','1 抽','≥2 抽'],[h['Pulls'] for h in data['hits']])
+        self.assertEqual(['1 抽','2 抽','—'],[h['Pulls'] for h in data['hits']])
         self.assertEqual(3,self.store.snapshot('default-0','A')['total'])
+        self.assertEqual(['2 抽','—'],[h['Pulls'] for h in self.store.snapshot('default-0','A')['hits']])
 
     def test_export_import_roundtrip_idempotence_and_wrong_category_rejected(self):
         self.write('default-0',[('甲','狂','A'),('甲','狂','A')])
@@ -46,6 +47,24 @@ class RecordsTest(unittest.TestCase):
         self.assertEqual([],self.store.read('default-1'))
         self.store.export('default-0',Path(self.temp.name)/'export.md')
         self.assertIn('|时间|',(Path(self.temp.name)/'export.md').read_text(encoding='utf-8'))
+
+    def test_pool_order_matches_visible_records(self):
+        self.write('default-0',[('甲','普','Z'),('乙','狂','A'),('丙','普','Z')])
+        data=self.store.snapshot('default-0')
+        self.assertEqual(['Z','A'],data['pools'])
+        self.assertEqual('无上一条狂记录', data['hits'][0]['Note'])
+
+    def test_delete_backs_up_records_and_survives_refresh(self):
+        self.write('default-0',[('甲','狂','A')])
+        original=self.store.read('default-0')
+        result=self.store.delete('default-0')
+        backup=Path(result['backup'])/'records/活动.jsonl'
+        self.assertEqual(original,[json.loads(line) for line in backup.read_text(encoding='utf-8').splitlines()])
+        data=self.store.snapshot('default-0')
+        self.assertNotEqual('default-0',data['selected_category'])
+        self.assertNotIn('default-0',[c['id'] for c in data['categories']])
+        self.store.delete('legacy')
+        self.assertNotIn('legacy',[c['id'] for c in self.store.snapshot('default-1')['categories']])
 
     def test_duplicate_names_rejected(self):
         with self.assertRaises(ValueError):self.store.add('常驻')
@@ -60,7 +79,7 @@ class RecordsTest(unittest.TestCase):
         for filename,records in [('活动.jsonl',rows[:2]),('导入.jsonl',rows[2:])]:
             (archive/filename).write_text(''.join(json.dumps(r,ensure_ascii=False)+'\n' for r in records),encoding='utf-8')
         before=self.store.snapshot('default-0')
-        self.assertEqual(['≥2 抽'],[h['Pulls'] for h in before['hits']])
+        self.assertEqual(['—'],[h['Pulls'] for h in before['hits']])
         export=Path(self.temp.name)/'same-second.xlsx'
         self.store.export('default-0',export)
         destination=module.Records(Path(self.temp.name)/'restored')

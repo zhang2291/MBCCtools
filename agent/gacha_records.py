@@ -49,6 +49,30 @@ class Records:
         self.save_catalog(categories + [category])
         return category
 
+    def delete(self, category_id):
+        category = self.category(category_id)
+        categories = self.categories()
+        if category_id != 'legacy' and len(categories) <= 1:
+            raise ValueError('请至少保留一个池子类型')
+        archive = self.archive(category_id)
+        backup = self.root / 'deleted-gacha' / (datetime.datetime.now().strftime('%Y%m%d-%H%M%S-') + uuid.uuid4().hex[:8])
+        backup.mkdir(parents=True)
+        (backup / 'category.json').write_text(json.dumps(category, ensure_ascii=False), encoding='utf-8')
+        moved = False
+        try:
+            if archive.exists():
+                os.replace(archive, backup / 'records')
+                moved = True
+            if category_id == 'legacy':
+                (self.root / '.gacha-legacy-hidden').write_text('hidden', encoding='utf-8')
+            else:
+                self.save_catalog([c for c in categories if c['id'] != category_id])
+        except Exception:
+            if moved:
+                os.replace(backup / 'records', archive)
+            raise
+        return dict(backup=str(backup))
+
     def read(self, category_id):
         rows = []
         for file in sorted(self.archive(category_id).glob('*.jsonl')):
@@ -66,29 +90,35 @@ class Records:
         return re.sub(r'^(\d{4}-\d{2}-\d{2})(\d{2}:)', r'\1 \2', row['cells'][0])
 
     def snapshot(self, category_id, pool=''):
+        available = self.categories()
+        if category_id != 'legacy' and category_id not in [c['id'] for c in available]:
+            category_id = available[0]['id']
         rows = self.read(category_id)
-        pools = sorted({r['cells'][1] for r in rows})
-        if pool:
-            rows = [r for r in rows if r['cells'][1] == pool]
+        latest = sorted(rows, key=lambda r: (self.time(r), -r.get('index', 0)), reverse=True)
+        pools = list(dict.fromkeys(r['cells'][1] for r in latest))
         ordered = sorted(rows, key=lambda r: (self.time(r), -r.get('index', 0)))
-        counts, seen, hits = defaultdict(int), set(), []
+        since_gold, seen_gold, hits = 0, False, []
         for r in ordered:
-            group = (r.get('type') or '未判', r['cells'][1])
-            counts[group] += 1
+            since_gold += 1
             if r.get('rarity') == '狂':
                 hits.append(dict(Time=self.time(r), Pool=r['cells'][1], Name=r['cells'][-1],
-                                 Pulls=('' if group in seen else '≥') + str(counts[group]) + ' 抽'))
-                counts[group] = 0
-                seen.add(group)
+                                 Pulls=str(since_gold) + ' 抽' if seen_gold else '—',
+                                 Note='' if seen_gold else '无上一条狂记录'))
+                since_gold = 0
+                seen_gold = True
+        if pool:
+            rows = [r for r in rows if r['cells'][1] == pool]
+            ordered = [r for r in ordered if r['cells'][1] == pool]
+            hits = [h for h in hits if h['Pool'] == pool]
         rares = len(hits)
-        categories = self.categories() + [self.category('legacy')]
+        categories = self.categories() + ([] if (self.root / '.gacha-legacy-hidden').exists() else [self.category('legacy')])
         summaries = []
         for c in categories:
             data = self.read(c['id'])
             gold = sum(r.get('rarity') == '狂' for r in data)
             summaries.append(dict(Name=c['name'], Total=len(data), Gold=gold,
                                   Average=f'{len(data)/gold:.1f}' if gold else '—'))
-        return dict(categories=categories, summaries=summaries, pools=pools, total=len(rows), gold=rares,
+        return dict(selected_category=category_id, categories=categories, summaries=summaries, pools=pools, total=len(rows), gold=rares,
                     average=f'{len(rows)/rares:.1f}' if rares else '—', hits=list(reversed(hits)),
                     details=[dict(Time=self.time(r), Pool=r['cells'][1], Type=r.get('type') or '未判',
                                   Rarity=r.get('rarity') or '未判', Name=r['cells'][-1]) for r in reversed(ordered)])
@@ -186,7 +216,7 @@ class Records:
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument('operation',choices=['snapshot','add','export','import'])
+    parser.add_argument('operation',choices=['snapshot','add','export','import','delete'])
     parser.add_argument('--root',required=True)
     parser.add_argument('--category',default='legacy')
     parser.add_argument('--name',default='')
@@ -197,6 +227,7 @@ def main():
     try:
         if args.operation=='snapshot': result=records.snapshot(args.category,args.pool)
         elif args.operation=='add': result=records.add(args.name)
+        elif args.operation=='delete': result=records.delete(args.category)
         elif args.operation=='export': result=records.export(args.category,args.path,args.pool)
         else: result=records.import_excel(args.category,args.path)
         print(json.dumps(result,ensure_ascii=False))
