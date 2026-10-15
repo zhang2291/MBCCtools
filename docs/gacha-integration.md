@@ -33,7 +33,7 @@ Android 保持 MaaFramework 5.13.1，使用 MaaAgentCoreAndroid `3.13.15-maafw5.
 
 桌面端源码入口使用 PATH 中的 Python，需要 MaaFw 与桌面 GUI 实际加载的 native 版本一致，并安装 numpy/openpyxl。Android runtime 不能复制给 Windows 使用。
 
-2026-10-15 已按用户要求单独同步 `build-local-final`：保留其原有 124 个资源文件及既有任务/选项，仅追加抽卡相关资源、任务、选项和 Agent 注册。该测试包实际 native 版本为 5.12.3，因此包内独立部署 Python 3.13.7 + MaaFw 5.12.3 + openpyxl 3.1.5；本地 interface 的 child_exec 指向 `./agent/python/python.exe`，不依赖系统 Python。桌面 GUI 本身未增加查看页，结果在 `build-local-final/data/record/` 下查看 Excel/Markdown。
+2026-10-15 首次按用户要求单独同步 `build-local-final`：保留其原有 124 个资源文件及既有任务/选项，仅追加抽卡相关资源、任务、选项和 Agent 注册。该测试包实际 native 版本为 5.12.3，因此包内独立部署 Python 3.13.7 + MaaFw 5.12.3 + openpyxl 3.1.5；本地 interface 的 child_exec 指向 `./agent/python/python.exe`，不依赖系统 Python。首次同步通过文件查看结果，后续第二版已增加下述独立页面。
 
 同步前备份位于 `build-local-final/backup/gacha-setup-20261015-134703/`，含旧 interface、旧 agent、原资源 SHA256 清单和部署清单。实际加载测试包 native DLL，已通过桌面 IPC Agent 连接、黑屏零点击及人工单页 OCR→采集→导出→重复采集无新增测试。未操作游戏账号。已有桌面窗口需重新打开以加载新任务入口。
 
@@ -65,6 +65,9 @@ Android 保持 MaaFramework 5.13.1，使用 MaaAgentCoreAndroid `3.13.15-maafw5.
 - 概览只显示总抽数、狂数量、样本平均抽数及狂级出货间隔；完整明细另设页签并可导出。均值为已保存记录数/狂数量，首个出狂间隔标记下界；不猜 UP、歪率和官方保底。
 - 游戏追踪类型、实际卡池名称、用户定义类型分别保留；实际卡池筛选只影响查看和导出，不改变下一次采集覆盖范围。跨用户类型的 Excel 默认拒绝合并，以免误归档。
 - 后端 `agent/gacha_records.py` 按需运行，不加载 Maa 原生库、WebView 或截图服务；页面无实时画面。
+- 第二版验证：7 项分类/统计/Excel 回归通过；同秒多文件往返保持顺序；编辑可见列而保留冲突原始列会明确报错；用户旧 JSONL 迁移前后逐字节一致；真实 5.12.3 Agent 使用分类目录的离线采集、导出、重复去重通过。桌面构建 0 error；无窗口渲染检查和运行代次归属测试通过，停止按钮不会接管后续其他任务。
+- 本地安装包的根目录及 libs 中 MFAAvalonia.Core.dll 已同步相同新版，以免加载旧副本。启动前需重开桌面程序。第二版运行包备份：`build-local-final/backup/gacha-page-20261015-145150`。
+- 界面反馈修正：汇总仅展示「抽数 / 狂 / 狂平均抽数」；顶部按钮收紧，自定义类型与导出收进展开菜单；类型概览改为自动换行卡片，长概览整体滚动；明细指定 13px 字体、32px 行高与自适应列。使用实际 Suki 主题检查 1100×780、800×600、650×500 下的两个页签。采集每页自动写入，导出只是另存文件，不是保存开关。
 
 ### 启动耗时与公告修正
 
