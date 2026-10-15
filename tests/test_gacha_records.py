@@ -70,6 +70,58 @@ class RecordsTest(unittest.TestCase):
         with self.assertRaises(ValueError):self.store.add('常驻')
         with self.assertRaises(StopIteration):self.store.archive('../outside')
 
+    def test_global_summary_ignores_selected_type_and_pool(self):
+        self.write('default-0',[('甲','狂','A'),('乙','普','B')])
+        self.write('default-1',[('丙','狂','C')])
+        snapshot=self.store.snapshot('default-0','B')
+        self.assertEqual(1,snapshot['total'])
+        self.assertEqual((3,2,'1.5'),(snapshot['all_total'],snapshot['all_gold'],snapshot['all_average']))
+
+    def test_all_export_import_preserves_categories_and_is_idempotent(self):
+        self.write('default-0',[('甲','狂','A')])
+        custom=self.store.add('四合一')
+        empty=self.store.add('空类型')
+        self.write(custom['id'],[('乙','狂','B'),('乙','狂','B')])
+        path=Path(self.temp.name)/'all.xlsx'
+        self.assertEqual(3,self.store.export_all(path)['count'])
+        other=module.Records(Path(self.temp.name)/'other')
+        self.assertEqual(3,other.import_all(path)['count'])
+        self.assertEqual(0,other.import_all(path)['count'])
+        categories={c['name']:c['id'] for c in other.categories()}
+        self.assertEqual(1,len(other.read('default-0')))
+        self.assertEqual(2,len(other.read(categories['四合一'])))
+        self.assertEqual([],other.read(categories['空类型']))
+
+    def test_invalid_later_category_does_not_partially_import(self):
+        from openpyxl import load_workbook
+        self.write('default-0',[('甲','狂','A')])
+        self.write('default-1',[('乙','狂','B')])
+        path=Path(self.temp.name)/'all.xlsx';self.store.export_all(path)
+        wb=load_workbook(path);wb['抽卡记录'].cell(3,6,'冲突名称');wb.save(path);wb.close()
+        other=module.Records(Path(self.temp.name)/'other');other.categories()
+        before=other.catalog.read_bytes()
+        with self.assertRaises(ValueError):other.import_all(path)
+        self.assertEqual(before,other.catalog.read_bytes())
+        self.assertEqual([],list(other.root.rglob('*.jsonl')))
+
+    def test_all_import_rolls_back_a_write_failure(self):
+        from unittest.mock import patch
+        self.write('default-0',[('甲','狂','A')])
+        self.write('default-1',[('乙','狂','B')])
+        path=Path(self.temp.name)/'all.xlsx';self.store.export_all(path)
+        other=module.Records(Path(self.temp.name)/'other');other.categories()
+        before=other.catalog.read_bytes()
+        original=module.Records._replace_file
+        calls=[]
+        def fail_second(target, content):
+            calls.append(target)
+            if len(calls)==2: raise OSError('simulated disk failure')
+            return original(target,content)
+        with patch.object(module.Records,'_replace_file',side_effect=fail_second):
+            with self.assertRaises(OSError):other.import_all(path)
+        self.assertEqual(before,other.catalog.read_bytes())
+        self.assertEqual([],list(other.root.rglob('*.jsonl')))
+
     def test_permanent_delete_removes_only_selected_records_and_reports(self):
         self.write('default-0',[('甲','狂','A')])
         self.write('default-1',[('乙','狂','B')])
