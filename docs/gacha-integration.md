@@ -84,6 +84,15 @@ Android 保持 MaaFramework 5.13.1，使用 MaaAgentCoreAndroid `3.13.15-maafw5.
 
 ## Android 第二版（2026-10-16）
 
+### MuMu 导入修复验证（2026-10-16）
+
+- Excel 导入失败的 URI 来自 Android XML provider 不支持桌面 JAXP feature，并非需要访问的网站。改为兼容的可选配置，同时独立拒绝 DTD/实体声明并拦截外部实体；损坏 XML 使用中文错误提示。
+- PI 的 option 未写 type 时按协议默认 select，修复真实 interface.json 中「识别方式」被丢弃的问题。显式未知类型仍拒绝。
+- 本次全量 JVM 测试 502 项通过；MuMu Android 15 上 3 项 instrumentation 测试通过，涵盖实际 XML provider、UTF-16 与外部实体拒绝。
+- 已通过 ADB 在 MuMu 的系统文件选择器导入桌面合成样例：7 个类型、4 条记录。确认后页面显示总抽数 4、狂 2；重复导入新增 0 条；强制停止并重启后数据仍在。
+- 点击开始采集不再出现缺失 option 诊断，当前停在 `Shizuku permission not granted`。未授权服务、未运行真实游戏 OCR，不代表完整采集链路验收。
+- 修复包：`android/output/MBCCtools-gacha-v2-fix-import-arm64-20261016.apk`，SHA256 `E2B62D7A6CB289BD04F409A33591832FB7670B7A14A88179DABB188F42C39B78`。已覆盖安装到 MuMu，未清除应用数据。验证资料位于 `D:\gpt\MBCCtools\mumu-validation-20261016`。
+
 - 底部新增独立「抽卡记录」页（History 图标），主页按钮和日常任务列表中的采集入口移除；旧配置保留，但普通日常执行时不再夹带抽卡任务。
 - 独立页选择用户类型与识别方式后启动单一采集，使用临时运行配置，不修改日常配置。停止按钮只控制这次采集；启动阶段也可取消。
 - 顶部显示全部类型总计；分类概览、狂级出货记录、逐条明细、实际卡池筛选、稀有度筛选及搜索均在此页。出狂间隔按同一用户类型内相邻两次狂计算，包含本次一抽，首条显示“—”。
