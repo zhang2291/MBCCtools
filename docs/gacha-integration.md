@@ -92,3 +92,4 @@ Android 保持 MaaFramework 5.13.1，使用 MaaAgentCoreAndroid `3.13.15-maafw5.
 - 前台模式先检查服务连接与授权，显式点击采集才退到游戏；等待 Activity 停止后再启动带一次性标识的请求。取消/超时会使标识失效。后台模式继续沿用当前虚拟屏和控制链路。游戏必须已处于记录页；未完成连接时会提示，不会直接隐藏应用。
 - 本轮本地验证涵盖数据存储/删除/导入回滚、桌面 Excel 读取、手机 Excel 回导桌面、独立计划与普通日常隔离、启动取消与停止归属、前台请求失效、统计排序。没有安装或控制用户手机，没有进行真实游戏采集；Android 生命周期切换、设备权限与画面识别仍需真机验收。
 - 测试包统一放在 `android/output/MBCCtools-gacha-v2-debug-arm64-20261016.apk`。覆盖安装同签名旧包可保留应用数据，不建议为升级先卸载。
+- 最终包：`0.1.1-alpha.10` / versionCode 290，约 142.8 MiB，SHA256 `B63B9EB96B50B676247A5D0CA09C3F47C474DA3653DFDEB588F42876D2D2727A`。90 项定向单元测试全部通过；桌面文件→手机导入与手机文件→桌面导入均验证通过；APK 内含配套 5.13.1 Agent、openpyxl、采集 Pipeline 与 20 张徽章模板。构建成功后已执行 `:app:clean`，保留验证 XML、交换样例和包元数据在 `D:\gpt\MBCCtools\android-gacha-v2-validation-20261016`。手机功能提交 `f271b33`。
