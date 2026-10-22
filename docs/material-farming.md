@@ -40,6 +40,14 @@
 本地验证输出：`D:\gpt\MBCCtools\materials-validation-20261022`。
 桌面测试资源已同步 `build-local-final`，三个旧文件备份于 `build-local-final/backup/materials-n9-n10-20261022`。重启助手后选择新菜单测试。
 
+### 桌面 Agent 启动修正
+
+20:39 的实际日志确认：直接复制源码 interface.json 覆盖了桌面专用 `agent.child_exec`，系统 Python 缺少 maa，Agent 在约 0.1 秒后退出，界面却仍等连接。这是本次资源同步回归，已恢复 `./agent/python/python.exe`。
+
+修复后按桌面配置启动实际 Agent 子进程并连接 IPC，握手约 0.27 秒、自定义节点成功注册；未执行游戏任务。原生初始化仍有既存 plugins 目录加载提示，连接成功不受影响。修复前配置备份于 `backup/agent-start-fix-20261022`。
+
+以后同步桌面接口使用 `python tools/sync_local_interface.py build-local-final`，保留随包 Python 并自动备份；不要再用源码 interface.json 原样覆盖桌面版。Android 内置接口仍使用其独立运行时，不修改成 Windows 路径。
+
 ## 配套 Android 包与资源更新
 
 包：`android/output/MBCCtools-n9-n10-resource-update-arm64-20261022.apk`，版本 `0.1.1-alpha.13` / 293，SHA256 `03C1BF597D73707E5A7644B9DA057A3AF29187BB5450B259B5CE183A756A76D9`。APK 内三份材料配置与源码逐字节相同。
