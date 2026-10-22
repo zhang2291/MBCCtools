@@ -2,6 +2,10 @@
 # 资源项目根目录（相对本文件）
 assets: ..
 
+# 与资源发布清单的 UTC 时间版本保持一致，防止旧远端资源覆盖新 APK。
+update:
+  stampResourceVersion: true
+
 # 只把 Android 运行真正需要的 PI 和资源打进 APK
 include:
   - interface.json

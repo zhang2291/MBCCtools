@@ -1,21 +1,21 @@
 {
     "进入新城": {
         "recognition": "OCR",
-        "expected": [
-            "新城"
-        ],
+        "expected": "^新城[·・.：:\\s]*[ⅠI1|]$",
         "roi": [
-            33,
+            20,
             324,
-            94,
+            150,
             76
         ],
         "action": "DoNothing",
         "post_wait_freezes": 1000,
         "next": [
-            "碎金盛宴AB选择",
+            "苍蓝穹顶入口",
             "[JumpBack]从右向左滑"
-        ]
+        ],
+        "timeout": 3000,
+        "only_rec": true
     },
     "远邦to新城": {
         "recognition": "OCR",
@@ -42,7 +42,8 @@
             1,
             1
         ],
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 1000,
+        "max_hit": 8
     },
     "里湾to新城": {
         "recognition": "OCR",
@@ -70,6 +71,7 @@
             1,
             1
         ],
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 1000,
+        "max_hit": 8
     }
 }

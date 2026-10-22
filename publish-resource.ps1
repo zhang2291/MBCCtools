@@ -33,7 +33,8 @@ foreach ($file in $jsonFiles) {
 }
 Write-Host "Validated $($jsonFiles.Count) JSON files."
 
-$tag = 'resource-v' + (Get-Date -Format 'yyyyMMdd-HHmmss')
+# Match the Android bundled-resource baseline so update ordering is timezone independent.
+$tag = 'resource-v' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
 if (-not $UseCurrentCommit) {
     git add -- interface.json resource agent .github/workflows/publish-resource.yml publish-resource.ps1
     Assert-GitSuccess 'Stage resources'

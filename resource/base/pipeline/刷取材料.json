@@ -14,19 +14,21 @@
     },
     "进入新城": {
         "recognition": "OCR",
-        "expected": "新城",
+        "expected": "^新城[·・.：:\\s]*[ⅠI1|]$",
         "roi": [
-            33,
+            20,
             324,
-            94,
+            150,
             76
         ],
         "action": "DoNothing",
         "post_wait_freezes": 1000,
         "next": [
-            "碎金盛宴AB选择",
+            "苍蓝穹顶入口",
             "[JumpBack]从右向左滑"
-        ]
+        ],
+        "timeout": 3000,
+        "only_rec": true
     },
     "远邦to新城": {
         "recognition": "OCR",
@@ -50,7 +52,8 @@
             1,
             1
         ],
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 1000,
+        "max_hit": 8
     },
     "里湾to新城": {
         "recognition": "OCR",
@@ -74,7 +77,8 @@
             1,
             1
         ],
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 1000,
+        "max_hit": 8
     },
     "从右向左滑": {
         "recognition": "DirectHit",
@@ -91,7 +95,8 @@
             1,
             1
         ],
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 1000,
+        "max_hit": 8
     },
     "从左向右滑": {
         "recognition": "DirectHit",
@@ -109,19 +114,6 @@
             1
         ],
         "post_wait_freezes": 1000
-    },
-    "碎金盛宴AB选择": {
-        "recognition": "OCR",
-        "expected": "N3",
-        "action": "Click",
-        "post_wait_freezes": 1000,
-        "next": [
-            "目标材料关卡"
-        ],
-        "on_error": [
-            "滑动找关卡"
-        ],
-        "timeout": 3000
     },
     "滑动找关卡": {
         "recognition": "DirectHit",
@@ -142,8 +134,11 @@
         "post_wait_freezes": 1000,
         "next": [
             "目标材料关卡",
+            "滑动找关卡",
             "反向滑动找关卡"
-        ]
+        ],
+        "max_hit": 5,
+        "timeout": 3000
     },
     "反向滑动找关卡": {
         "recognition": "DirectHit",
@@ -165,12 +160,13 @@
         "timeout": 3000,
         "next": [
             "目标材料关卡",
-            "[JumpBack]滑动找关卡"
-        ]
+            "反向滑动找关卡"
+        ],
+        "max_hit": 10
     },
     "目标材料关卡": {
         "recognition": "OCR",
-        "expected": "N3-6",
+        "expected": "^N\\s*10\\s*[-－–—]\\s*8$",
         "action": "Click",
         "focus": {
             "Node.Action.Succeeded": "进入材料关卡"
@@ -182,5 +178,40 @@
             "[JumpBack]连续扫荡",
             "[JumpBack]扫荡最大次数"
         ]
+    },
+    "苍蓝穹顶入口": {
+        "recognition": "OCR",
+        "expected": "^N\\s*(9|10)$",
+        "roi": [
+            200,
+            100,
+            1060,
+            500
+        ],
+        "action": "Click",
+        "post_wait_freezes": 1000,
+        "next": [
+            "苍蓝穹顶章节选择"
+        ],
+        "timeout": 5000
+    },
+    "苍蓝穹顶章节选择": {
+        "recognition": "OCR",
+        "expected": "^N\\s*10$",
+        "roi": [
+            960,
+            410,
+            300,
+            290
+        ],
+        "action": "Click",
+        "post_wait_freezes": 1000,
+        "next": [
+            "目标材料关卡"
+        ],
+        "on_error": [
+            "滑动找关卡"
+        ],
+        "timeout": 3000
     }
 }

@@ -1,0 +1,70 @@
+"""Material route contract: user-confirmed drops and bounded navigation, no game clicks."""
+import json
+from pathlib import Path
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+MATERIAL_STAGES = {
+    '裂生冰晶锥': 'N10-1', '沉雾泪晶': 'N10-6', '繁盛曲铜晶': 'N10-9',
+    '结霜毒砂晶': 'N10-3', '燃念赤晶': 'N9-8', '衰变暮辉晶': 'N10-4',
+    '异化暗凝胶': 'N10-8', '异化诡影鞘翅': 'N9-5', '异化棘状角': 'N10-7',
+    '异化尖刺骨片': 'N10-2', '异化真红囊泡': 'N10-5', '异化拟怪腕足': 'N9-2',
+}
+
+
+class MaterialRouteTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = json.loads((ROOT / 'interface.json').read_text(encoding='utf-8'))
+        cls.pipeline = json.loads((ROOT / 'resource/base/pipeline/刷取材料.json').read_text(encoding='utf-8'))
+
+    def test_each_material_selects_only_its_chapter_and_stage(self):
+        cases = self.interface['option']['材料选择']['cases']
+        self.assertEqual({c['name'] for c in cases}, set(MATERIAL_STAGES))
+        for case in cases:
+            with self.subTest(material=case['name']):
+                stage = MATERIAL_STAGES[case['name']]
+                chapter = stage.split('-')[0]
+                overrides = case['pipeline_override']
+                chapter_pattern = overrides['苍蓝穹顶章节选择']['expected']
+                stage_pattern = overrides['目标材料关卡']['expected']
+                self.assertRegex(chapter, chapter_pattern)
+                self.assertNotRegex('N9' if chapter == 'N10' else 'N10', chapter_pattern)
+                self.assertRegex(stage, stage_pattern)
+                self.assertRegex(stage.replace('-', ' - '), stage_pattern)
+                self.assertNotRegex(stage + '0', stage_pattern)
+                for other_stage in set(MATERIAL_STAGES.values()) - {stage}:
+                    self.assertNotRegex(other_stage, stage_pattern)
+
+    def test_new_city_one_is_distinct_from_new_city_two(self):
+        pattern = self.pipeline['进入新城']['expected']
+        self.assertTrue(self.pipeline['进入新城']['only_rec'])
+        for text in ['新城·I', '新城·Ⅰ', '新城 1', '新城：1']:
+            self.assertRegex(text, pattern)
+        for text in ['新城·II', '新城·Ⅱ', '新城·2', '里湾', '远邦']:
+            self.assertNotRegex(text, pattern)
+        global_pipeline = json.loads((ROOT / 'resource/global/pipeline/刷取材料.json').read_text(encoding='utf-8'))
+        self.assertEqual(global_pipeline['进入新城'], self.pipeline['进入新城'])
+
+    def test_map_entry_requires_a_second_chapter_click(self):
+        self.assertEqual(self.pipeline['苍蓝穹顶入口']['next'], ['苍蓝穹顶章节选择'])
+        chapter = self.pipeline['苍蓝穹顶章节选择']
+        self.assertEqual(chapter['next'], ['目标材料关卡'])
+        # The map's N9/N10 labels are around y=345; the cover's labels start at y=452.
+        self.assertGreater(chapter['roi'][1], 400)
+
+    def test_missing_stage_search_terminates_after_two_bounded_sweeps(self):
+        # Simulate Maa's documented max_hit rule: exhausted nodes are skipped in next.
+        hits = {}
+        current = '滑动找关卡'
+        while current is not None:
+            hits[current] = hits.get(current, 0) + 1
+            self.assertLessEqual(sum(hits.values()), 15)
+            current = next((name for name in self.pipeline[current]['next']
+                            if name != '目标材料关卡'
+                            and hits.get(name, 0) < self.pipeline[name]['max_hit']), None)
+        self.assertEqual(hits, {'滑动找关卡': 5, '反向滑动找关卡': 10})
+
+
+if __name__ == '__main__':
+    unittest.main()

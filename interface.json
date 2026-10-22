@@ -239,7 +239,7 @@
           }
         },
         {
-          "name": "刷取材料（碎金盛宴）",
+          "name": "刷取材料（苍蓝穹顶）",
           "icon": "image/材料/材料.png",
           "pipeline_override": {
             "每日体力用途": {
@@ -356,11 +356,11 @@
           "name": "裂生冰晶锥",
           "icon": "image/材料/裂生冰晶锥.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N4"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N4-8"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*1$"
             }
           }
         },
@@ -368,11 +368,11 @@
           "name": "沉雾泪晶",
           "icon": "image/材料/沉雾泪晶.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N3"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N3-B3"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*6$"
             }
           }
         },
@@ -380,11 +380,11 @@
           "name": "繁盛曲铜晶",
           "icon": "image/材料/繁盛曲铜晶.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N4"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N4-B4"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*9$"
             }
           }
         },
@@ -392,11 +392,11 @@
           "name": "结霜毒砂晶",
           "icon": "image/材料/结霜毒砂晶.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N4"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N4-0"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*3$"
             }
           }
         },
@@ -404,11 +404,11 @@
           "name": "燃念赤晶",
           "icon": "image/材料/燃念赤晶.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N4"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*9$"
             },
             "目标材料关卡": {
-              "expected": "N4-B1"
+              "expected": "^N\\s*9\\s*[-－–—]\\s*8$"
             }
           }
         },
@@ -416,11 +416,11 @@
           "name": "衰变暮辉晶",
           "icon": "image/材料/衰变暮辉晶.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N3"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N3-5"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*4$"
             }
           }
         },
@@ -428,11 +428,11 @@
           "name": "异化暗凝胶",
           "icon": "image/材料/异化暗凝胶.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N3"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N3-6"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*8$"
             }
           }
         },
@@ -440,11 +440,11 @@
           "name": "异化诡影鞘翅",
           "icon": "image/材料/异化诡影鞘翅.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N3"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*9$"
             },
             "目标材料关卡": {
-              "expected": "N3-B2"
+              "expected": "^N\\s*9\\s*[-－–—]\\s*5$"
             }
           }
         },
@@ -452,11 +452,11 @@
           "name": "异化棘状角",
           "icon": "image/材料/异化棘状角.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N4"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N4-A4"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*7$"
             }
           }
         },
@@ -464,11 +464,11 @@
           "name": "异化尖刺骨片",
           "icon": "image/材料/异化尖刺骨片.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N3"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N3-A1"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*2$"
             }
           }
         },
@@ -476,11 +476,11 @@
           "name": "异化真红囊泡",
           "icon": "image/材料/异化真红囊泡.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N3"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*10$"
             },
             "目标材料关卡": {
-              "expected": "N3-B4"
+              "expected": "^N\\s*10\\s*[-－–—]\\s*5$"
             }
           }
         },
@@ -488,16 +488,16 @@
           "name": "异化拟怪腕足",
           "icon": "image/材料/异化拟怪腕足.png",
           "pipeline_override": {
-            "碎金盛宴AB选择": {
-              "expected": "N4"
+            "苍蓝穹顶章节选择": {
+              "expected": "^N\\s*9$"
             },
             "目标材料关卡": {
-              "expected": "N4-6"
+              "expected": "^N\\s*9\\s*[-－–—]\\s*2$"
             }
           }
         }
       ],
-      "description": "请确保碎金盛宴 N3/N4 普通难度已解锁扫荡",
+      "description": "请确保苍蓝穹顶 N9/N10 普通难度已解锁扫荡",
       "type": "select"
     },
     "关卡未开放备选": {
