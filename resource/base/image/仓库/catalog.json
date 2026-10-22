@@ -1,0 +1,629 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "40bbe41564e6",
+      "name": "异色魂识印记",
+      "category": "消耗品",
+      "template": "仓库/40bbe41564e6.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "381da3432f23",
+      "name": "三阶源质补给箱",
+      "category": "消耗品",
+      "template": "仓库/381da3432f23.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "6df556c2d916",
+      "name": "狂级烙印礼匣I",
+      "category": "消耗品",
+      "template": "仓库/6df556c2d916.png",
+      "threshold": 0.88,
+      "ambiguous": true,
+      "ambiguity_reason": "狂级烙印礼匣I/Ⅱ图标相同，正式任务不能点开，保留未知。"
+    },
+    {
+      "id": "2d9ff7c9de50",
+      "name": "随机狂级烙印礼匣",
+      "category": "消耗品",
+      "template": "仓库/2d9ff7c9de50.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "5d0eccead4f1",
+      "name": "冒险自选追踪档案",
+      "category": "消耗品",
+      "template": "仓库/5d0eccead4f1.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "552c988284c3",
+      "name": "狂级追踪档案",
+      "category": "消耗品",
+      "template": "仓库/552c988284c3.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "50213e2f166d",
+      "name": "“工作狂”",
+      "category": "消耗品",
+      "template": "仓库/50213e2f166d.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "3679c21a708c",
+      "name": "内海遗物箱",
+      "category": "消耗品",
+      "template": "仓库/3679c21a708c.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "60d0dd04e40b",
+      "name": "危级烙印礼匣",
+      "category": "消耗品",
+      "template": "仓库/60d0dd04e40b.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "14cbacf07ddf",
+      "name": "超阶材料补给箱",
+      "category": "消耗品",
+      "template": "仓库/14cbacf07ddf.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "1f5eaa300f40",
+      "name": "体力补给Ⅳ型",
+      "category": "消耗品",
+      "template": "仓库/1f5eaa300f40.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "89f7fd7fdc9c",
+      "name": "普级烙印礼匣",
+      "category": "消耗品",
+      "template": "仓库/89f7fd7fdc9c.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "1f6ede4f3513",
+      "name": "二阶源液补给箱",
+      "category": "消耗品",
+      "template": "仓库/1f6ede4f3513.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "854eed00ef77",
+      "name": "高阶材料补给箱",
+      "category": "消耗品",
+      "template": "仓库/854eed00ef77.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c891b54c396b",
+      "name": "一阶源素补给箱",
+      "category": "消耗品",
+      "template": "仓库/c891b54c396b.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "af457b0681cf",
+      "name": "体力补给I型",
+      "category": "消耗品",
+      "template": "仓库/af457b0681cf.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "ca1f25498092",
+      "name": "中阶材料补给箱",
+      "category": "消耗品",
+      "template": "仓库/ca1f25498092.png",
+      "threshold": 0.88,
+      "min_margin": 0.003
+    },
+    {
+      "id": "cf769afac408",
+      "name": "低阶材料补给箱",
+      "category": "消耗品",
+      "template": "仓库/cf769afac408.png",
+      "threshold": 0.88,
+      "min_margin": 0.003
+    },
+    {
+      "id": "cd017fd93ea2",
+      "name": "内海狂念",
+      "category": "道具",
+      "template": "仓库/cd017fd93ea2.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "b62473e23da0",
+      "name": "内海呓语",
+      "category": "道具",
+      "template": "仓库/b62473e23da0.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "30aaf19183cc",
+      "name": "泪晶",
+      "category": "道具",
+      "template": "仓库/30aaf19183cc.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c143afab508a",
+      "name": "感染腕足",
+      "category": "道具",
+      "template": "仓库/c143afab508a.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "867e663a1e5f",
+      "name": "技能模组IV",
+      "category": "道具",
+      "template": "仓库/867e663a1e5f.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "2b26b48486c1",
+      "name": "监测磁带",
+      "category": "道具",
+      "template": "仓库/2b26b48486c1.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "07ac8eede889",
+      "name": "梦影之尘",
+      "category": "道具",
+      "template": "仓库/07ac8eede889.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "54442a8464dc",
+      "name": "危级魂识印记",
+      "category": "道具",
+      "template": "仓库/54442a8464dc.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "33411977e5f6",
+      "name": "边界重构碎片",
+      "category": "道具",
+      "template": "仓库/33411977e5f6.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "bb02a96811b8",
+      "name": "普级思感精粹",
+      "category": "道具",
+      "template": "仓库/bb02a96811b8.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "1586ff22e440",
+      "name": "冰晶",
+      "category": "道具",
+      "template": "仓库/1586ff22e440.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "ed18c514f193",
+      "name": "赤晶",
+      "category": "道具",
+      "template": "仓库/ed18c514f193.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "06e173285696",
+      "name": "二阶狂暴源液",
+      "category": "道具",
+      "template": "仓库/06e173285696.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "9c82ce963b00",
+      "name": "二阶精准源液",
+      "category": "道具",
+      "template": "仓库/9c82ce963b00.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "e6acee069aa9",
+      "name": "感染骨片",
+      "category": "道具",
+      "template": "仓库/e6acee069aa9.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "b3a1be7be0c8",
+      "name": "感染角质",
+      "category": "道具",
+      "template": "仓库/b3a1be7be0c8.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "2ddf24a82fc9",
+      "name": "感染凝胶",
+      "category": "道具",
+      "template": "仓库/2ddf24a82fc9.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "8a528b7ff2f3",
+      "name": "感染鞘翅",
+      "category": "道具",
+      "template": "仓库/8a528b7ff2f3.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "9794175c7cdc",
+      "name": "二阶异能源液",
+      "category": "道具",
+      "template": "仓库/9794175c7cdc.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c99a1408fd29",
+      "name": "技能模组Ⅲ",
+      "category": "道具",
+      "template": "仓库/c99a1408fd29.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "691427b20158",
+      "name": "普级魂识印记",
+      "category": "道具",
+      "template": "仓库/691427b20158.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "7b4998c013fd",
+      "name": "冰石精矿",
+      "category": "道具",
+      "template": "仓库/7b4998c013fd.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "ef87c25875bb",
+      "name": "暮辉石精矿",
+      "category": "道具",
+      "template": "仓库/ef87c25875bb.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c575c1077b72",
+      "name": "红石精矿",
+      "category": "道具",
+      "template": "仓库/c575c1077b72.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "6af4ad788797",
+      "name": "毒砂精矿",
+      "category": "道具",
+      "template": "仓库/6af4ad788797.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "e67d69721d74",
+      "name": "原生腕足",
+      "category": "道具",
+      "template": "仓库/e67d69721d74.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "fea661d0c59d",
+      "name": "原生骨片",
+      "category": "道具",
+      "template": "仓库/fea661d0c59d.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "394b8bf06317",
+      "name": "原生角质",
+      "category": "道具",
+      "template": "仓库/394b8bf06317.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "b0d87a721085",
+      "name": "原生凝胶",
+      "category": "道具",
+      "template": "仓库/b0d87a721085.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "32436458e274",
+      "name": "原生鞘翅",
+      "category": "道具",
+      "template": "仓库/32436458e274.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "d12e60db71d0",
+      "name": "原生囊胞",
+      "category": "道具",
+      "template": "仓库/d12e60db71d0.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "6da364f05682",
+      "name": "一阶狂暴源素",
+      "category": "道具",
+      "template": "仓库/6da364f05682.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "06ae1e49bc0b",
+      "name": "一阶坚韧源素",
+      "category": "道具",
+      "template": "仓库/06ae1e49bc0b.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "152383d3dcda",
+      "name": "一阶精准源素",
+      "category": "道具",
+      "template": "仓库/152383d3dcda.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "a17706841b67",
+      "name": "一阶启迪源素",
+      "category": "道具",
+      "template": "仓库/a17706841b67.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "13fd53a7f77e",
+      "name": "一阶异能源素",
+      "category": "道具",
+      "template": "仓库/13fd53a7f77e.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "6c05d7b62129",
+      "name": "一阶诡秘源素",
+      "category": "道具",
+      "template": "仓库/6c05d7b62129.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "809efa9c0232",
+      "name": "技能模组Ⅱ",
+      "category": "道具",
+      "template": "仓库/809efa9c0232.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "6959d53cf043",
+      "name": "鞘翅残片",
+      "category": "道具",
+      "template": "仓库/6959d53cf043.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "fc0cd7996ba0",
+      "name": "破损囊胞",
+      "category": "道具",
+      "template": "仓库/fc0cd7996ba0.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "555f525c1c15",
+      "name": "冰石粗矿",
+      "category": "道具",
+      "template": "仓库/555f525c1c15.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "16c8177d5c78",
+      "name": "暮辉石粗矿",
+      "category": "道具",
+      "template": "仓库/16c8177d5c78.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "b59cb288c5c1",
+      "name": "红石粗矿",
+      "category": "道具",
+      "template": "仓库/b59cb288c5c1.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "13052d96b0b6",
+      "name": "毒砂粗矿",
+      "category": "道具",
+      "template": "仓库/13052d96b0b6.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "2685d84df8fc",
+      "name": "枯萎腕足",
+      "category": "道具",
+      "template": "仓库/2685d84df8fc.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "72a6754a8003",
+      "name": "破损骨片",
+      "category": "道具",
+      "template": "仓库/72a6754a8003.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c8be6766bd3c",
+      "name": "断裂角质",
+      "category": "道具",
+      "template": "仓库/c8be6766bd3c.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "868afdee6d33",
+      "name": "悬浊凝胶",
+      "category": "道具",
+      "template": "仓库/868afdee6d33.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c49024914422",
+      "name": "技能模组I",
+      "category": "道具",
+      "template": "仓库/c49024914422.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "9a72b7c6b460",
+      "name": "狂级思感精粹",
+      "category": "道具",
+      "template": "仓库/9a72b7c6b460.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "0aa1fc773220",
+      "name": "意识晶核",
+      "category": "道具",
+      "template": "仓库/0aa1fc773220.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "1d20c3c091a8",
+      "name": "燃念赤晶",
+      "category": "道具",
+      "template": "仓库/1d20c3c091a8.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "4948b1fcb74b",
+      "name": "沉雾泪晶",
+      "category": "道具",
+      "template": "仓库/4948b1fcb74b.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "5ee162158e52",
+      "name": "狂级魂识印记",
+      "category": "道具",
+      "template": "仓库/5ee162158e52.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "8d5415e76147",
+      "name": "改名卡",
+      "category": "道具",
+      "template": "仓库/8d5415e76147.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "e9136b892f6f",
+      "name": "核心重构碎片",
+      "category": "道具",
+      "template": "仓库/e9136b892f6f.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "c2b4b1dde517",
+      "name": "危级思感精粹",
+      "category": "道具",
+      "template": "仓库/c2b4b1dde517.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "7f3e7bae6dfd",
+      "name": "多相合金",
+      "category": "道具",
+      "template": "仓库/7f3e7bae6dfd.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "45967f2c8437",
+      "name": "都市搜索令",
+      "category": "道具",
+      "template": "仓库/45967f2c8437.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "64c8408f678f",
+      "name": "搜索令",
+      "category": "道具",
+      "template": "仓库/64c8408f678f.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "3413432d3669",
+      "name": "衰变暮辉晶",
+      "category": "道具",
+      "template": "仓库/3413432d3669.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "6e5fd9ed28dc",
+      "name": "繁盛曲铜晶",
+      "category": "道具",
+      "template": "仓库/6e5fd9ed28dc.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "48309c7d7305",
+      "name": "异化尖刺骨片",
+      "category": "道具",
+      "template": "仓库/48309c7d7305.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "abde6aeb95f8",
+      "name": "异化暗凝胶",
+      "category": "道具",
+      "template": "仓库/abde6aeb95f8.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "2c01a7db95a5",
+      "name": "异化诡影鞘翅",
+      "category": "道具",
+      "template": "仓库/2c01a7db95a5.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "06e429d84efe",
+      "name": "三阶狂暴源质",
+      "category": "道具",
+      "template": "仓库/06e429d84efe.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "5bc1deff2a9b",
+      "name": "内海亡骸",
+      "category": "道具",
+      "template": "仓库/5bc1deff2a9b.png",
+      "threshold": 0.88
+    },
+    {
+      "id": "b3acfb2a9d2d",
+      "name": "狂级烙印礼匣Ⅱ",
+      "category": "消耗品",
+      "template": "仓库/b3acfb2a9d2d.png",
+      "threshold": 0.88,
+      "ambiguous": true,
+      "ambiguity_reason": "狂级烙印礼匣I/Ⅱ图标相同，正式任务不能点开，保留未知。"
+    },
+    {
+      "id": "60cbada87b41",
+      "name": "随机中阶材料补给箱",
+      "category": "消耗品",
+      "template": "仓库/60cbada87b41.png",
+      "threshold": 0.88,
+      "min_margin": 0.003
+    },
+    {
+      "id": "278579888d41",
+      "name": "随机低阶材料补给箱",
+      "category": "消耗品",
+      "template": "仓库/278579888d41.png",
+      "threshold": 0.88,
+      "min_margin": 0.003
+    }
+  ]
+}

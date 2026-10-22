@@ -1,0 +1,271 @@
+{
+    "仓库识别": {
+        "recognition": "DirectHit",
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "InventoryBegin",
+                "custom_action_param": {}
+            }
+        },
+        "max_hit": 1,
+        "next": [
+            "仓库识别_选择道具",
+            "仓库识别_打开仓库",
+            "仓库识别_打开整备中心"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_打开整备中心": {
+        "recognition": "OCR",
+        "expected": "整备中心",
+        "roi": [
+            980,
+            625,
+            130,
+            70
+        ],
+        "action": "Click",
+        "timeout": 5000,
+        "max_hit": 1,
+        "post_delay": 400,
+        "next": [
+            "仓库识别_打开仓库"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_打开仓库": {
+        "recognition": "OCR",
+        "expected": "仓库",
+        "roi": [
+            935,
+            465,
+            170,
+            110
+        ],
+        "action": "Click",
+        "timeout": 5000,
+        "max_hit": 1,
+        "post_delay": 400,
+        "next": [
+            "仓库识别_选择道具"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_选择道具": {
+        "recognition": "OCR",
+        "expected": "^道具$",
+        "roi": [
+            30,
+            135,
+            210,
+            65
+        ],
+        "action": "Click",
+        "timeout": 5000,
+        "max_hit": 1,
+        "post_delay": 400,
+        "next": [
+            "仓库识别_确认道具"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_确认道具": {
+        "recognition": "OCR",
+        "expected": "米诺斯管理系统.*道具",
+        "roi": [
+            270,
+            80,
+            350,
+            65
+        ],
+        "action": "DoNothing",
+        "timeout": 5000,
+        "max_hit": 1,
+        "next": [
+            "仓库识别_扫描道具"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_扫描道具": {
+        "recognition": "DirectHit",
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "InventoryScanCategory",
+                "custom_action_param": {
+                    "category": "道具"
+                }
+            }
+        },
+        "max_hit": 1,
+        "next": [
+            "仓库识别_选择消耗品"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ],
+        "focus": {
+            "Node.Action.Starting": "正在识别仓库道具（仅截图和滚动）"
+        }
+    },
+    "仓库识别_选择消耗品": {
+        "recognition": "OCR",
+        "expected": "^消耗品$",
+        "roi": [
+            30,
+            225,
+            210,
+            60
+        ],
+        "action": "Click",
+        "timeout": 5000,
+        "max_hit": 1,
+        "post_delay": 400,
+        "next": [
+            "仓库识别_确认消耗品"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_确认消耗品": {
+        "recognition": "OCR",
+        "expected": "米诺斯管理系统.*消耗品",
+        "roi": [
+            270,
+            80,
+            350,
+            65
+        ],
+        "action": "DoNothing",
+        "timeout": 5000,
+        "max_hit": 1,
+        "next": [
+            "仓库识别_扫描消耗品"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ]
+    },
+    "仓库识别_扫描消耗品": {
+        "recognition": "DirectHit",
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "InventoryScanCategory",
+                "custom_action_param": {
+                    "category": "消耗品"
+                }
+            }
+        },
+        "max_hit": 1,
+        "next": [
+            "仓库识别_保存汇总"
+        ],
+        "on_error": [
+            "仓库识别_保存汇总"
+        ],
+        "focus": {
+            "Node.Action.Starting": "正在识别仓库消耗品（不打开或使用物品）"
+        }
+    },
+    "仓库识别_保存汇总": {
+        "recognition": "DirectHit",
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "InventoryExport",
+                "custom_action_param": {}
+            }
+        },
+        "max_hit": 1,
+        "next": [
+            "仓库识别_确认主页",
+            "仓库识别_返回主页",
+            "仓库识别_返回上级"
+        ],
+        "focus": {
+            "Node.Action.Succeeded": "仓库汇总已保存至 data/inventory，请查看完整性与未识别项"
+        }
+    },
+    "仓库识别_返回主页": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "主菜单.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "next": [
+            "仓库识别_确认主页",
+            "仓库识别_返回主页",
+            "仓库识别_返回上级"
+        ],
+        "timeout": 5000,
+        "max_hit": 6
+    },
+    "仓库识别_返回上级": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "返回按钮.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 30,
+        "next": [
+            "仓库识别_确认主页",
+            "仓库识别_返回主页",
+            "仓库识别_返回上级"
+        ],
+        "timeout": 5000,
+        "max_hit": 6
+    },
+    "仓库识别_确认主页": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    80,
+                    350,
+                    80,
+                    50
+                ],
+                "expected": [
+                    "公告"
+                ]
+            }
+        },
+        "action": "DoNothing",
+        "focus": {
+            "Node.Recognition.Succeeded": "仓库识别结束，已回到主页"
+        }
+    }
+}
