@@ -72,3 +72,11 @@
 验证：真实 Maa 离线回放使用合成狄斯西区/里湾画面接用户的新城/章节截图，N9/N10 均经过两次上滑、两次章节点击成功；合成完成画面→真实主菜单模板→合成主页文字的收尾回放通过。6 项定向测试和实际打包目录三层资源加载通过，尚未在真实游戏扫荡后验收。
 
 另为 `option.识别方式` 显式补 `type: select`，避免 MPE schema 的 select/switch oneOf 同时命中。官服 MPE 资源根应是 `build-local-final/resource/base`，不能选同时含多个 bundle 的项目根或 resource 父目录。重新打开编辑器使用 Project Interface 配置。
+
+### 21:03 运行日志复核
+
+- 正式任务日志仍是旧的 `刷取材料.next`（没有狄斯西区分支），进程启动于 20:47；磁盘已经更新，但仅重开编辑器不会重载正式任务的 Maa Resource。测试前需保存编辑器内容、完整退出并重启助手。
+- 对用户新提供的真实狄斯西区截图执行实际节点 OCR，命中“狄斯西区”，置信度 0.997473。此前的导航修复无需再次扩大 ROI。
+- MPE 独立日志 21:03:25 明确报协议不匹配：客户端 v5.13.0 / protocol 8，Python Agent 自动加载的默认库 v5.12.3 / protocol 7；后续重试才表现为连接超时。设备和资源加载均成功，错误发生在节点执行前。
+- Agent 入口仅在 Windows、`PI_CLIENT_NAME=MPE` 且没有显式 `MAAFW_BINARY_PATH` 时，选择同包的 `tools/MaaPipelineEditor/runtime/maafw/bin`；不更换正常桌面任务或 Android 的库。MPE Go 启动器明确传入该客户端标志。
+- 5 项启动路径测试通过；用 MPE 实际 v5.13.0 DLL 作客户端，真实启动包内 Agent 进程，IPC 握手成功约 0.294 秒；源 Agent 同样成功约 0.303 秒。仅验证连接，未从调试器执行游戏任务。旧入口已备份 `backup/mpe-agent-protocol-20261022/main.py`。
