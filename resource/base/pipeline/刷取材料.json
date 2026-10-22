@@ -5,10 +5,11 @@
         "post_wait_freezes": 1000,
         "next": [
             "进入新城",
+            "[JumpBack]狄斯西区to新城",
             "[JumpBack]远邦to新城",
             "[JumpBack]里湾to新城",
-            "[JumpBack]狄斯",
-            "[JumpBack]主菜单"
+            "[JumpBack]材料进入狄斯",
+            "[JumpBack]材料导航回主页"
         ],
         "timeout": 3000
     },
@@ -173,8 +174,8 @@
         },
         "post_wait_freezes": 1000,
         "next": [
-            "扫荡完成",
-            "扫荡失败",
+            "材料扫荡完成",
+            "材料扫荡失败",
             "[JumpBack]连续扫荡",
             "[JumpBack]扫荡最大次数"
         ]
@@ -213,5 +214,202 @@
             "滑动找关卡"
         ],
         "timeout": 3000
+    },
+    "狄斯西区to新城": {
+        "recognition": "OCR",
+        "expected": [
+            "狄斯西区",
+            "狄斯西區"
+        ],
+        "roi": [
+            31,
+            324,
+            124,
+            77
+        ],
+        "action": "Swipe",
+        "begin": [
+            68,
+            462,
+            1,
+            1
+        ],
+        "end": [
+            71,
+            363,
+            1,
+            1
+        ],
+        "post_wait_freezes": 1000,
+        "max_hit": 8,
+        "focus": {
+            "Node.Action.Succeeded": "从狄斯西区向新城切换"
+        }
+    },
+    "材料进入狄斯": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    898,
+                    100,
+                    350,
+                    151
+                ],
+                "expected": "狄斯"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 3000,
+        "focus": {
+            "Node.Recognition.Succeeded": "切换到狄斯"
+        },
+        "max_hit": 2
+    },
+    "材料导航回主页": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "主菜单.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "next": [
+            "任务间隔"
+        ],
+        "max_hit": 1
+    },
+    "材料扫荡完成": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    340,
+                    593,
+                    307,
+                    108
+                ],
+                "expected": "完成"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "next": [
+            "材料确认主页",
+            "材料返回主页",
+            "材料返回上级"
+        ],
+        "timeout": 5000
+    },
+    "材料扫荡失败": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    497,
+                    309,
+                    276,
+                    87
+                ],
+                "expected": "不足"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    500,
+                    493,
+                    1,
+                    1
+                ]
+            }
+        },
+        "next": [
+            "材料确认主页",
+            "材料返回主页",
+            "材料返回上级"
+        ],
+        "timeout": 5000
+    },
+    "材料返回主页": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "主菜单.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "next": [
+            "材料确认主页",
+            "材料返回主页",
+            "材料返回上级"
+        ],
+        "timeout": 5000,
+        "max_hit": 6
+    },
+    "材料返回上级": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "返回按钮.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_wait_freezes": 30,
+        "next": [
+            "材料确认主页",
+            "材料返回主页",
+            "材料返回上级"
+        ],
+        "timeout": 5000,
+        "max_hit": 6
+    },
+    "材料确认主页": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1018,
+                    422,
+                    34,
+                    40
+                ],
+                "expected": [
+                    "禁"
+                ]
+            }
+        },
+        "action": "DoNothing",
+        "focus": {
+            "Node.Recognition.Succeeded": "材料扫荡结束，已回到主页"
+        }
     }
 }

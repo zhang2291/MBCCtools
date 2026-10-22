@@ -65,6 +65,21 @@ class MaterialRouteTest(unittest.TestCase):
                             and hits.get(name, 0) < self.pipeline[name]['max_hit']), None)
         self.assertEqual(hits, {'滑动找关卡': 5, '反向滑动找关卡': 10})
 
+    def test_west_district_is_handled_before_home_fallback(self):
+        route = self.pipeline['刷取材料']['next']
+        self.assertLess(route.index('[JumpBack]狄斯西区to新城'), route.index('[JumpBack]材料导航回主页'))
+        west = self.pipeline['狄斯西区to新城']
+        self.assertIn('狄斯西区', west['expected'])
+        self.assertLess(west['end'][1], west['begin'][1])
+        self.assertEqual(self.pipeline['材料导航回主页']['max_hit'], 1)
+
+    def test_completion_and_shortage_require_home_confirmation(self):
+        route = ['材料确认主页', '材料返回主页', '材料返回上级']
+        for name in ['材料扫荡完成', '材料扫荡失败', '材料返回主页', '材料返回上级']:
+            self.assertEqual(self.pipeline[name]['next'], route)
+        self.assertNotIn('next', self.pipeline['材料确认主页'])
+        self.assertEqual(self.interface['option']['识别方式']['type'], 'select')
+
 
 if __name__ == '__main__':
     unittest.main()
