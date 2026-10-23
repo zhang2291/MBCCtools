@@ -29,3 +29,7 @@ MaaFramework 真实控制器回调连接 MuMu 验证正式 pipeline，点击仅�
 手机格子布局提交 `65e96a5`，APK：`android/output/MBCCtools-inventory-grid-arm64-20261023.apk`，版本 `0.1.1-alpha.15` / 295，SHA256 `C19F784F4C45F1B9F6A8C07FDED83C65CA49E29541685A885DDF747AB710C0F9`。编译与打包通过；本轮按用户要求没有操作游戏或模拟器。前一版独立页在 MuMu 打开过，使用复制的桌面库存快照确认显示与图片读取，不等同于手机游戏采集验收。
 
 验证输出：`D:\gpt\MBCCtools\inventory-ui-check` 与 `D:\gpt\MBCCtools\inventory-grid-validation-20261023`。正式库存扫描不点开物品的限制不变。
+
+### 汇总文案微调
+
+顶部静态说明简化为“更新于 YYYY-MM-DD HH:mm:ss”。异方晶卡片标题为“异方晶 / 抽数”，例如 `41514 / 230`，抽数使用非负整数除以180并舍弃余数；未知金额不显示成0抽。此换算仅用于页面，原始库存和导出格式保持不变，格内未知/冲突提示保留。电脑版已同步 `build-local-final`，使用实际快照验证该读数和时间文案；手机配套包名为 `MBCCtools-inventory-summary-arm64-20261023.apk`。
