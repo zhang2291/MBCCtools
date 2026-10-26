@@ -61,9 +61,19 @@ if ($needFrameworkSetup) {
 $frameworkVersion = (Get-Content (Join-Path $MaaFwAppDir '.maafwversion') -Raw).Trim().TrimStart('v')
 $agentDir = Join-Path $PSScriptRoot 'agent-runtime'
 $agentManifest = Join-Path $agentDir 'arm64-v8a/bundle/agent-core.json'
-if (-not (Test-Path $agentManifest)) {
-    & python (Join-Path $MaaFwAppDir 'scripts/build_agent_bundle.py') --out $agentDir --core-tag "3.13.15-maafw$frameworkVersion" --require openpyxl==3.1.5
+$requirements = Join-Path $PSScriptRoot 'agent-requirements.txt'
+$requirementsHash = (Get-FileHash -LiteralPath $requirements -Algorithm SHA256).Hash
+$requirementsMarker = Join-Path $agentDir 'project-requirements.sha256'
+$pillowDir = Join-Path $agentDir 'arm64-v8a/bundle/site-packages/PIL'
+# A cached Python core alone is insufficient: inventory imports Pillow, including native codecs.
+$hasPillow = (Test-Path -LiteralPath $pillowDir) -and
+    @(Get-ChildItem -LiteralPath $pillowDir -Filter '_imaging*.so' -ErrorAction SilentlyContinue).Count -gt 0
+$sameRequirements = (Test-Path -LiteralPath $requirementsMarker) -and
+    (Get-Content -LiteralPath $requirementsMarker -Raw).Trim() -eq $requirementsHash
+if (-not (Test-Path $agentManifest) -or -not $hasPillow -or -not $sameRequirements) {
+    & python (Join-Path $MaaFwAppDir 'scripts/build_agent_bundle.py') --out $agentDir --core-tag "3.13.15-maafw$frameworkVersion" --requirements $requirements --extra-index-url 'https://chaquo.com/pypi-13.1/'
     if ($LASTEXITCODE -ne 0) { throw 'Android Agent runtime preparation failed.' }
+    $requirementsHash | Set-Content -LiteralPath $requirementsMarker -Encoding ASCII
 }
 $manifest = Get-Content $agentManifest -Raw | ConvertFrom-Json
 if ($manifest.provides.maafw -ne $frameworkVersion) {

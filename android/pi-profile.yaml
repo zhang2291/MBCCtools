@@ -32,4 +32,4 @@ agent:
         MAAFW_BINARY_PATH: "{nativeLibs}"
         PYTHONHOME: "{bundle}/prefix"
         PYTHONPATH: "{bundle}/site-packages:{bundle}/site-packages/pure.zip"
-        LD_LIBRARY_PATH: "{bundle}/prefix/lib:{bundle}/site-packages/numpy.libs:{nativeLibs}"
+        LD_LIBRARY_PATH: "{bundle}/prefix/lib:{bundle}/site-packages/numpy.libs:{bundle}/site-packages/chaquopy/lib:{nativeLibs}"
