@@ -88,9 +88,17 @@ def _same_page(a, b):
 
 def _swipe(controller, down):
     # 纵向半页，保留重叠；不得改成点击物品探测。
+    # 动作结束后轮询截图，连续两帧稳定才继续，避免固定长等待。
     start, end = (605, 455) if down else (455, 605)
-    controller.post_swipe(1220, start, 1220, end, 1500).wait()
-    time.sleep(.65)
+    controller.post_swipe(1220, start, 1220, end, 1000).wait()
+    previous = _snapshot(controller)
+    for _ in range(6):
+        time.sleep(.12)
+        current = _snapshot(controller)
+        if _same_page(previous, current):
+            return current
+        previous = current
+    raise TimeoutError("滑动后页面未稳定，停止本轮识别以避免读取动画中的画面")
 
 
 def _cards(context, image):
@@ -164,34 +172,44 @@ def _color_matches(image, match, template):
     return float(np.abs(actual-_template_color(template)).mean()) <= 10
 
 
-def _scan_page(context, image, category, catalog, output, page):
+def _scan_page(context, image, category, catalog, output, page, match_cache=None):
     cards = _cards(context, image)
     folder = _root() / 'captures' / _session['run_id'] / category
     _save_image(folder / f'page-{page:02}.png', image)
+    if match_cache is None:
+        match_cache = {}
     for x, y, quantity in cards:
         if getattr(context.tasker, 'stopping', False):
             raise InterruptedError('用户停止')
-        candidates = []
-        for entry in catalog:
-            if entry['category'] != category:
-                continue
-            detail = context.run_recognition_direct(JRecognitionType.TemplateMatch,
-                JTemplateMatch(template=[entry['template']], roi=[x, y, 136, 145],
-                               threshold=[entry.get('threshold', .88)]), image)
-            for match in _results(detail):
-                score = float(getattr(match, 'score', 0))
-                if score >= entry.get('threshold', .88) and _color_matches(image, match, entry['template']):
-                    candidates.append((score, entry))
-        candidates.sort(key=lambda pair: pair[0], reverse=True)
         crop = image[y+16:y+134, x+8:x+126]
-        # 同分近似图标不能强行命名，保留为未知。
+        # 半页滚动会重复显示上一页的物品，相同图标裁图可复用模板匹配结果。
+        # 数量仍逐页 OCR，且 merge_item 继续检查跨页数量冲突。
+        crop_digest = hashlib.sha256(crop.tobytes()).hexdigest()
+        # The recognition ROI is wider than the saved icon crop; key the exact ROI and
+        # category so visually identical cards from different categories never cross-contaminate.
+        match_key = (category, hashlib.sha256(image[y:y+145, x:x+136].tobytes()).hexdigest())
+        candidates = match_cache.get(match_key)
+        if candidates is None:
+            candidates = []
+            for entry in catalog:
+                if entry['category'] != category:
+                    continue
+                detail = context.run_recognition_direct(JRecognitionType.TemplateMatch,
+                    JTemplateMatch(template=[entry['template']], roi=[x, y, 136, 145],
+                                   threshold=[entry.get('threshold', .88)]), image)
+                for match in _results(detail):
+                    score = float(getattr(match, 'score', 0))
+                    if score >= entry.get('threshold', .88) and _color_matches(image, match, entry['template']):
+                        candidates.append((score, entry))
+            candidates.sort(key=lambda pair: pair[0], reverse=True)
+            match_cache[match_key] = candidates
         if (candidates and not candidates[0][1].get('ambiguous', False)
                 and (len(candidates) == 1 or candidates[0][0]-candidates[1][0] >= candidates[0][1].get('min_margin', .025))):
             score, entry = candidates[0]
             merge_item(output['items'], dict(id=entry['id'], name=entry['name'],
                        category=category, quantity=quantity, score=round(score, 4)))
         else:
-            digest = hashlib.sha256(crop.tobytes()).hexdigest()[:16]
+            digest = crop_digest[:16]
             path = folder / f'unknown-{digest}.png'
             _save_image(path, crop)
             output['unknown'][digest] = dict(quantity=quantity, image=str(path), page=page)
@@ -262,6 +280,7 @@ class InventoryScanCategory(CustomAction):
                 output['reason'] = '未确认仓库分类页面'
                 return False
             catalog = _catalog()
+            match_cache = {}
             for name, roi in [('异方晶', [866, 30, 93, 37]), ('狄斯币', [1012, 30, 114, 37])]:
                 value = _number(context, image, roi)
                 if value is not None:
@@ -272,8 +291,7 @@ class InventoryScanCategory(CustomAction):
                 if getattr(context.tasker, 'stopping', False):
                     output['reason'] = '用户停止'
                     return False
-                _swipe(controller, False)
-                newer = _snapshot(controller)
+                newer = _swipe(controller, False)
                 still = still+1 if _same_page(image, newer) else 0
                 image = newer
                 if still >= 2:
@@ -286,11 +304,10 @@ class InventoryScanCategory(CustomAction):
                 if getattr(context.tasker, 'stopping', False):
                     output['reason'] = '用户停止'
                     return False
-                count += _scan_page(context, image, category, catalog, output, page)
+                count += _scan_page(context, image, category, catalog, output, page, match_cache)
                 output['pages'] += 1
                 _log(f'{category}第{page+1}页：已识别{len(output["items"])}种，未知图标{len(output["unknown"])}个')
-                _swipe(controller, True)
-                newer = _snapshot(controller)
+                newer = _swipe(controller, True)
                 still = still+1 if _same_page(image, newer) else 0
                 image = newer
                 if still >= 2:

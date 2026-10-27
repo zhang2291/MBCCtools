@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 
@@ -32,6 +32,51 @@ class InventoryTests(unittest.TestCase):
         self.assertTrue(inventory._same_page(before, after))
         after[200:600,300:1100] = 100
         self.assertFalse(inventory._same_page(before, after))
+
+    def test_swipe_waits_for_stable_frame_and_uses_shorter_motion(self):
+        image_a = np.zeros((720, 1280, 3), dtype=np.uint8)
+        image_b = np.full((720, 1280, 3), 100, dtype=np.uint8)
+        controller = SimpleNamespace(post_swipe=Mock(return_value=SimpleNamespace(wait=Mock())))
+        with patch.object(inventory, '_snapshot', side_effect=[image_a, image_b, image_b]), patch.object(inventory.time, 'sleep'):
+            result = inventory._swipe(controller, True)
+        controller.post_swipe.assert_called_once_with(1220, 605, 1220, 455, 1000)
+        self.assertTrue(np.array_equal(result, image_b))
+
+    def test_duplicate_card_crop_reuses_template_matches(self):
+        image = np.zeros((720, 1280, 3), dtype=np.uint8)
+        entry = dict(id='blue', name='SearchTicket', category='items', template='SearchTicket.png', threshold=.88)
+        match = SimpleNamespace(score=.94, box=[300, 260, 20, 20])
+        context = SimpleNamespace(
+            tasker=SimpleNamespace(stopping=False),
+            run_recognition_direct=Mock(return_value=SimpleNamespace(filtered_results=[match], all_results=[])),
+        )
+        output = dict(items={}, unknown={})
+        cache = {}
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp), \
+                patch.object(inventory, '_cards', return_value=[(290, 249, 17)]), \
+                patch.object(inventory, '_color_matches', return_value=True):
+            inventory.InventoryBegin().run(None, None)
+            inventory._scan_page(context, image, 'items', [entry], output, 0, cache)
+            inventory._scan_page(context, image, 'items', [entry], output, 1, cache)
+        self.assertEqual(1, context.run_recognition_direct.call_count)
+        self.assertEqual(17, output['items']['blue']['quantity'])
+
+    def test_duplicate_visuals_in_different_categories_do_not_share_matches(self):
+        image = np.zeros((720, 1280, 3), dtype=np.uint8)
+        context = SimpleNamespace(
+            tasker=SimpleNamespace(stopping=False),
+            run_recognition_direct=Mock(return_value=SimpleNamespace(filtered_results=[], all_results=[])),
+        )
+        output = dict(items={}, unknown={})
+        cache = {}
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp), \
+                patch.object(inventory, '_cards', return_value=[(290, 249, 17)]), \
+                patch.object(inventory, '_color_matches', return_value=True):
+            inventory.InventoryBegin().run(None, None)
+            for category in ('items', 'consumables'):
+                entry = dict(id=category, name=category, category=category, template='same.png', threshold=.88)
+                inventory._scan_page(context, image, category, [entry], output, 0, cache)
+        self.assertEqual(2, context.run_recognition_direct.call_count)
 
     def test_quantity_is_strict(self):
         self.assertEqual(25860565, inventory.parse_quantity('25,860,565'))

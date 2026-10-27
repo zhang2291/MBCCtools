@@ -5,6 +5,8 @@ assets: ..
 # 与资源发布清单的 UTC 时间版本保持一致，防止旧远端资源覆盖新 APK。
 update:
   stampResourceVersion: true
+  # GitHub releases for the MaaFwApp shell itself; PI resource updates still use interface.json.
+  appGithubRepository: "zhang2291/MaaFwApp"
 
 # 只把 Android 运行真正需要的 PI 和资源打进 APK
 include:
