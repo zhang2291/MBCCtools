@@ -56,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix='mbcc-gacha-native-', ignore_cleanup_err
     assert client.bind(resource)
     env = dict(os.environ, MBCC_DATA_DIR=str(pathlib.Path(temp) / 'data'), PYTHONUTF8='1', PI_CLIENT_MAAFW_VERSION=VS_CODE_VERSION)
     with open(pathlib.Path(temp) / 'agent.log', 'w+', encoding='utf-8') as log:
-        process = subprocess.Popen([sys.executable, str(ROOT / 'agent/vscode.py'), client.identifier], cwd=temp, env=env, stdout=log, stderr=log)
+        process = subprocess.Popen([sys.executable, str(ROOT / 'agent/main.py'), client.identifier], cwd=temp, env=env, stdout=log, stderr=log)
         try:
             assert client.connect(), 'Agent handshake failed'
             tasker = Tasker()
