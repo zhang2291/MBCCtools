@@ -29,33 +29,28 @@ D:\a-maa-dev\
 └─ MaaFwApp
 ```
 
-## Windows 桌面版构建
+## Windows 桌面端运行与构建
 
-环境：Windows 10/11、.NET 10 SDK、Python 3，并准备好 `MBCCtools\deps` 中的 MaaFramework 运行文件。
+### 1. 本地日常开发与调试（直读源码，零拷贝）
 
-先构建当前 Fork 的 MFAAvalonia：
+- Pipeline 与任务配置统一在 VSCode 中直接编辑 `MBCCtools` 根目录下的 `resource/` 与 `interface.json`。
+- 本地启动 `MFAAvalonia`（或运行编译出的 Debug/Release 程序）时，程序会自动寻找并挂载同级的 `MBCCtools` 源码开发目录，所有改动实时生效，无需反复复制或手动同步。
+
+### 2. 独立免安装包打包（可选）
+
+如需打包生成供分发使用的单机绿色包：
 
 ```powershell
+# 1. 编译发布 MFAAvalonia
 cd D:\a-maa-dev\MFAAvalonia
 dotnet publish .\MFAAvalonia.Desktop\MFAAvalonia.Desktop.csproj -c Release -r win-x64
-```
 
-然后组装 MBCCtools：
-
-```powershell
+# 2. 组装输出独立绿色包
 cd D:\a-maa-dev\MBCCtools
 .\build_local_gui.ps1 `
   -BaseDir "D:\a-maa-dev\MFAAvalonia\bin\AnyCPU\Release\win-x64\publish" `
   -OutDir "D:\a-maa-dev\MBCCtools\build-local-final" `
   -Version "local"
-```
-
-Pipeline 编辑统一使用 VSCode 的 Maa Support 插件，桌面运行目录不再内嵌 MaaPipelineEditor。
-
-最终运行目录：
-
-```text
-MBCCtools\build-local-final\MFAAvalonia.exe
 ```
 
 ## Android 版构建

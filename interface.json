@@ -622,9 +622,9 @@
   },
   "github": "https://github.com/zhang2291/MBCCtools",
   "agent": {
-    "child_exec": "./build-local-final/agent/python/python.exe",
+    "child_exec": "python",
     "child_args": [
-      "./agent/vscode.py"
+      "./agent/main.py"
     ]
   }
 }

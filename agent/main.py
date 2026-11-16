@@ -1,4 +1,15 @@
+import os
+from pathlib import Path
 import sys
+
+# 当由 VSCode Maa Support 插件启动时，匹配其内置的 native runtime 动态库
+if (sys.platform == "win32" and os.environ.get("PI_CLIENT_MAAFW_VERSION")
+        and not os.environ.get("MAAFW_BINARY_PATH")):
+    version = os.environ.get("PI_CLIENT_MAAFW_VERSION", "")
+    native_dir = (Path.home() / "AppData/Roaming/Code/User/globalStorage/nekosu.maa-support"
+                  / "native/install" / version / "node_modules/@maaxyz/maa-node-win32-x64")
+    if (native_dir / "MaaAgentServer.dll").is_file():
+        os.environ["MAAFW_BINARY_PATH"] = str(native_dir)
 
 from maa.agent.agent_server import AgentServer
 from maa.toolkit import Toolkit

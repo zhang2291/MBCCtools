@@ -38,6 +38,11 @@ class PipelineReadyTest(unittest.TestCase):
         self.assertFalse((ROOT / 'resource/bilibili').exists())
         self.assertFalse((ROOT / 'resource/global').exists())
 
+    def test_agent_exec_uses_standard_python(self):
+        interface = json.loads((ROOT / 'interface.json').read_text(encoding='utf-8'))
+        self.assertEqual('python', interface['agent']['child_exec'])
+        self.assertEqual(['./agent/main.py'], interface['agent']['child_args'])
+
 
 if __name__ == '__main__':
     unittest.main()
