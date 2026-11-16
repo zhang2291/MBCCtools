@@ -213,7 +213,7 @@
         "on_error": [
             "滑动找关卡"
         ],
-        "timeout": 3000
+        "timeout": 800
     },
     "狄斯西区to新城": {
         "recognition": "OCR",

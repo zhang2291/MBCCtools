@@ -18,9 +18,9 @@
 
 - 本地真实抽卡档案、配置、日志和此前回溯备份。
 - 当前手机 APK、Android Agent runtime、arm64 native 库；这些分别是交付物和打包输入。
-- MPE 前端与 LocalBridge：桌面编辑器仍需要。真正初始化发生在进入编辑器页面时，正常离开会释放；不能因为文件较大而删除。
+- MPE 前端与 LocalBridge 已随桌面 MPE 集成移除；Pipeline 编辑统一使用 VSCode 插件，不再随 MBCCtools 打包。
 - MaaCommonAssets 中旧 OCR 版本：虽然本项目默认仅选 v5 中文模型，这些文件属于 Git submodule，不能直接拆删。
-- base/bilibili/global 资源：共享模板与 overlay 有跨目录引用。
+- 仅保留 base 官服资源；bilibili/global 已按个人使用需求移除，后续不再恢复多服 overlay。
 - 手机上的 Shizuku、SMTP、Sentry、FloatingX 等：有实际功能或构建消费点，不因暂时不用而认定无用。
 
 ## 仍需进一步验证的候选
@@ -28,7 +28,7 @@
 - MaaFwApp 的 app/build 约 1555.83 MiB，主要为可再生构建副本；不是废弃源码。保留当前交付 APK后可单独执行构建清理，但下次构建会重新生成。
 - 手机 x86_64 native 输入约 217.49 MiB：当前 arm64 profile 不使用，通用/模拟器构建可能使用，暂保留。
 - Android Semi 图标库：592 个 XML 中静态业务调用涉及 39 个 Mono 图标，553 个成员为候选；需连同生成索引、R/XML 和动态加载验证后再精简。
-- 桌面 `MpePipelineExportService.Register` 旧入口没有找到业务调用，现有流程使用 SaveToResource/UpsertTask。保留当前服务，避免误删仍使用的保存/返回模型。
+- 桌面 MPE 导出服务已随 MPE 集成移除；任务管理继续独立保存 interface.json 并热应用。
 - `build_local_gui.ps1` 对已存在 OutDir 会直接递归删除，执行前必须核对目标与源码/基础包路径，不能用它对当前测试包盲目覆盖。此次未运行该脚本。
 
 ## 完整审查资料

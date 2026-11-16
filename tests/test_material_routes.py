@@ -43,13 +43,13 @@ class MaterialRouteTest(unittest.TestCase):
             self.assertRegex(text, pattern)
         for text in ['新城·II', '新城·Ⅱ', '新城·2', '里湾', '远邦']:
             self.assertNotRegex(text, pattern)
-        global_pipeline = json.loads((ROOT / 'resource/global/pipeline/刷取材料.json').read_text(encoding='utf-8'))
-        self.assertEqual(global_pipeline['进入新城'], self.pipeline['进入新城'])
 
     def test_map_entry_requires_a_second_chapter_click(self):
         self.assertEqual(self.pipeline['苍蓝穹顶入口']['next'], ['苍蓝穹顶章节选择'])
         chapter = self.pipeline['苍蓝穹顶章节选择']
         self.assertEqual(chapter['next'], ['目标材料关卡'])
+        self.assertEqual(chapter['on_error'], ['滑动找关卡'])
+        self.assertEqual(chapter['timeout'], 800)
         # The map's N9/N10 labels are around y=345; the cover's labels start at y=452.
         self.assertGreater(chapter['roi'][1], 400)
 

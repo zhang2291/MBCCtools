@@ -1,6 +1,7 @@
 """仓库只读扫描。运行期只截图和滑动，绝不点击物品或确认使用。"""
 import datetime
 import hashlib
+from dataclasses import asdict
 from functools import lru_cache
 import json
 import os
@@ -13,7 +14,7 @@ import numpy as np
 from PIL import Image
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
-from maa.pipeline import JOCR, JRecognitionType, JTemplateMatch
+from maa.pipeline import JOCR, JOr, JRecognitionType, JTemplateMatch
 
 ROOT = Path(__file__).resolve().parent.parent
 COLUMNS = (290, 454, 616, 779, 942, 1105)
@@ -88,17 +89,11 @@ def _same_page(a, b):
 
 def _swipe(controller, down):
     # 纵向半页，保留重叠；不得改成点击物品探测。
-    # 动作结束后轮询截图，连续两帧稳定才继续，避免固定长等待。
+    # 等滑动和惯性滚动结束再截图，不能把滑动前的旧帧当作底部稳定画面。
     start, end = (605, 455) if down else (455, 605)
-    controller.post_swipe(1220, start, 1220, end, 1000).wait()
-    previous = _snapshot(controller)
-    for _ in range(6):
-        time.sleep(.12)
-        current = _snapshot(controller)
-        if _same_page(previous, current):
-            return current
-        previous = current
-    raise TimeoutError("滑动后页面未稳定，停止本轮识别以避免读取动画中的画面")
+    controller.post_swipe(1220, start, 1220, end, 1500).wait()
+    time.sleep(.65)
+    return _snapshot(controller)
 
 
 def _cards(context, image):
@@ -127,6 +122,10 @@ def _cards(context, image):
             quantity_crop = image[bottom-29:end, x+48:x+130]
             white = quantity_crop.min(axis=2) > 140
             ys, xs = np.where(white)
+            # 白像素极少说明数字区域为空或被遮挡，跳过 OCR 节省时间。
+            if white.sum() < 15:
+                cards.append((x, top, None))
+                continue
             if len(xs):
                 quantity_crop = quantity_crop[max(0,ys.min()-2):ys.max()+3, max(0,xs.min()-2):xs.max()+3]
             enlarged = np.repeat(np.repeat(quantity_crop, 3, axis=0), 3, axis=1)
@@ -172,6 +171,37 @@ def _color_matches(image, match, template):
     return float(np.abs(actual-_template_color(template)).mean()) <= 10
 
 
+def _match_card(context, image, category, catalog, roi):
+    remaining = [entry for entry in catalog if entry['category'] == category]
+    candidates = []
+    while remaining:
+        any_of = [dict(recognition=JRecognitionType.TemplateMatch,
+                       **asdict(JTemplateMatch(template=[entry['template']], roi=roi,
+                                              threshold=[entry.get('threshold', .88)])),
+                       sub_name=entry['id']) for entry in remaining]
+        detail = context.run_recognition_direct(JRecognitionType.Or, JOr(any_of=any_of), image)
+        sub_results = getattr(getattr(detail, 'best_result', None), 'sub_results', None)
+        if not sub_results or len(sub_results) > len(remaining):
+            raise ValueError('模板批量识别返回了无效的子结果')
+        for index, sub in enumerate(sub_results):
+            entry = remaining[index]
+            if sub.name != entry['id'] or (index < len(sub_results)-1 and sub.hit):
+                raise ValueError('模板批量识别的子结果顺序或名称不一致')
+            if len(sub_results) < len(remaining) and index == len(sub_results)-1 and not sub.hit:
+                raise ValueError('模板批量识别在命中前意外终止')
+            matches = _results(sub)
+            best = getattr(sub, 'best_result', None)
+            if not matches and best is not None:
+                matches = [best]
+            for match in matches:
+                score = float(getattr(match, 'score', 0))
+                if score >= entry.get('threshold', .88) and _color_matches(image, match, entry['template']):
+                    candidates.append((score, entry))
+        remaining = remaining[len(sub_results):]
+    candidates.sort(key=lambda pair: pair[0], reverse=True)
+    return candidates
+
+
 def _scan_page(context, image, category, catalog, output, page, match_cache=None):
     cards = _cards(context, image)
     folder = _root() / 'captures' / _session['run_id'] / category
@@ -190,18 +220,7 @@ def _scan_page(context, image, category, catalog, output, page, match_cache=None
         match_key = (category, hashlib.sha256(image[y:y+145, x:x+136].tobytes()).hexdigest())
         candidates = match_cache.get(match_key)
         if candidates is None:
-            candidates = []
-            for entry in catalog:
-                if entry['category'] != category:
-                    continue
-                detail = context.run_recognition_direct(JRecognitionType.TemplateMatch,
-                    JTemplateMatch(template=[entry['template']], roi=[x, y, 136, 145],
-                                   threshold=[entry.get('threshold', .88)]), image)
-                for match in _results(detail):
-                    score = float(getattr(match, 'score', 0))
-                    if score >= entry.get('threshold', .88) and _color_matches(image, match, entry['template']):
-                        candidates.append((score, entry))
-            candidates.sort(key=lambda pair: pair[0], reverse=True)
+            candidates = _match_card(context, image, category, catalog, [x, y, 136, 145])
             match_cache[match_key] = candidates
         if (candidates and not candidates[0][1].get('ambiguous', False)
                 and (len(candidates) == 1 or candidates[0][0]-candidates[1][0] >= candidates[0][1].get('min_margin', .025))):
@@ -285,20 +304,7 @@ class InventoryScanCategory(CustomAction):
                 value = _number(context, image, roi)
                 if value is not None:
                     _session['currencies'][name] = value
-            # 先归顶，保证不是从用户停留的中间开始；有界且连续两次静止才认定边界。
-            still = 0
-            for _ in range(12):
-                if getattr(context.tasker, 'stopping', False):
-                    output['reason'] = '用户停止'
-                    return False
-                newer = _swipe(controller, False)
-                still = still+1 if _same_page(image, newer) else 0
-                image = newer
-                if still >= 2:
-                    break
-            if still < 2:
-                output['reason'] = '未能确认列表顶部'
-                return False
+            # 游戏打开分类时默认就在顶部，直接识别当前页，不再额外向上滑动。
             still, count = 0, 0
             for page in range(min(40, max(1, int(params.get('max_pages', 24))))):
                 if getattr(context.tasker, 'stopping', False):

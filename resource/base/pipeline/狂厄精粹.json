@@ -11,13 +11,13 @@
         ]
     },
     "恶兆之种": {
-        "recognition": "TemplateMatch",
-        "template": "狂厄.png",
+        "recognition": "OCR",
+        "expected": "清剿行动",
         "roi": [
-            705,
-            19,
-            278,
-            178
+            768,
+            185,
+            129,
+            62
         ],
         "action": "Click",
         "post_wait_freezes": 50

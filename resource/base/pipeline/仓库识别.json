@@ -215,6 +215,7 @@
         "action": {
             "type": "Click"
         },
+        "post_delay": 800,
         "next": [
             "仓库识别_确认主页",
             "仓库识别_返回主页",
@@ -239,6 +240,7 @@
         "action": {
             "type": "Click"
         },
+        "post_delay": 800,
         "post_wait_freezes": 30,
         "next": [
             "仓库识别_确认主页",

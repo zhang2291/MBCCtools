@@ -11,9 +11,9 @@
         ]
     },
     "狄斯币入口": {
-        "recognition": "TemplateMatch",
-        "template": "狄斯币.png",
-        "roi" : [704,29,296,147],
+        "recognition": "OCR",
+        "expected": "清剿行动",
+        "roi" : [768,185,129,62],
         "action": "Click",
         "post_wait_freezes": 50
     },

@@ -50,6 +50,63 @@ class GachaTests(unittest.TestCase):
             self.assertEqual({}, agent._sessions)
             self.assertTrue(session.file_for('活动').exists())
 
+    def test_known_page_skips_rarity_recognition(self):
+        cells = ('2026-10-15 10:00:00', '测试池', '已知角色')
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            session.file_for(None).write_text(json.dumps(
+                dict(index=1, key=agent._row_sig(cells), rarity='普', cells=cells),
+                ensure_ascii=False) + '\n', encoding='utf-8')
+            context = SimpleNamespace(
+                override_next=lambda *args: True,
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别', custom_recognition_param={},
+            )
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', return_value=1), \
+                    patch.object(agent, '_ocr_rows', return_value=([cells], [[440, 300, 640, 30]])), \
+                    patch.object(agent, '_rarity_by_row') as rarity:
+                self.assertIsNotNone(agent.GachaRecordPage().analyze(context, argv))
+            rarity.assert_not_called()
+            self.assertEqual(0, session.new_count)
+
+    def test_mixed_page_only_reads_rarity_for_new_rows(self):
+        known = ('2026-10-15 10:00:00', '测试池', '已知角色')
+        new = ('2026-10-15 10:01:00', '测试池', '新增角色')
+        rows = [known, new]
+        boxes = [[440, 300, 640, 30], [440, 340, 640, 30]]
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            session.file_for(None).write_text(json.dumps(
+                dict(index=1, key=agent._row_sig(known), rarity='普', cells=known),
+                ensure_ascii=False) + '\n', encoding='utf-8')
+            context = SimpleNamespace(
+                override_next=lambda *args: True,
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别', custom_recognition_param={},
+            )
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', return_value=1), \
+                    patch.object(agent, '_ocr_rows', return_value=(rows, boxes)), \
+                    patch.object(agent, '_rarity_by_row', return_value=['狂']) as rarity:
+                self.assertIsNotNone(agent.GachaRecordPage().analyze(context, argv))
+            self.assertEqual([boxes[1]], rarity.call_args.args[2])
+            self.assertEqual(1, session.new_count)
+            records = [json.loads(line) for line in session.file_for(None).read_text(encoding='utf-8').splitlines()]
+            self.assertEqual(2, len(records))
+            self.assertEqual(agent._row_sig(new), records[-1]['key'])
+            self.assertEqual('狂', records[-1]['rarity'])
+
     def test_numpy_page_upscale(self):
         def recognize(kind, params, image):
             self.assertEqual((144, 260, 3), image.shape)

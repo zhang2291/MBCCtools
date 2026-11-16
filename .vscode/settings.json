@@ -38,5 +38,7 @@
     "[markdown]": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-    }
+    },
+    "maa.controller.connectOnStartup": true,
+    "maa.controller.autoDetectOnStartup": true
 }

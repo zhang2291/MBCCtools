@@ -7,6 +7,12 @@ import tempfile
 import json
 
 import numpy as np
+
+VS_CODE_VERSION = '5.13.0'
+os.environ.setdefault('MAAFW_BINARY_PATH', str(
+    pathlib.Path.home() / 'AppData/Roaming/Code/User/globalStorage/nekosu.maa-support'
+    / 'native/install' / VS_CODE_VERSION / 'node_modules/@maaxyz/maa-node-win32-x64'))
+
 from maa.agent_client import AgentClient
 from maa.controller import CustomController
 from maa.resource import Resource
@@ -48,9 +54,9 @@ with tempfile.TemporaryDirectory(prefix='mbcc-gacha-native-', ignore_cleanup_err
     assert controller.post_connection().wait().succeeded
     client = AgentClient.create_tcp(0)
     assert client.bind(resource)
-    env = dict(os.environ, MBCC_DATA_DIR=str(pathlib.Path(temp) / 'data'), PYTHONUTF8='1')
+    env = dict(os.environ, MBCC_DATA_DIR=str(pathlib.Path(temp) / 'data'), PYTHONUTF8='1', PI_CLIENT_MAAFW_VERSION=VS_CODE_VERSION)
     with open(pathlib.Path(temp) / 'agent.log', 'w+', encoding='utf-8') as log:
-        process = subprocess.Popen([sys.executable, str(ROOT / 'agent/main.py'), client.identifier], cwd=temp, env=env, stdout=log, stderr=log)
+        process = subprocess.Popen([sys.executable, str(ROOT / 'agent/vscode.py'), client.identifier], cwd=temp, env=env, stdout=log, stderr=log)
         try:
             assert client.connect(), 'Agent handshake failed'
             tasker = Tasker()
@@ -62,7 +68,7 @@ with tempfile.TemporaryDirectory(prefix='mbcc-gacha-native-', ignore_cleanup_err
             assert not job.succeeded, 'Off-page collection should fail without pretending it collected data'
             assert controller.clicks == [], 'Unexpected click outside record page'
             assert not list((pathlib.Path(temp) / 'data').rglob('*.jsonl'))
-            print('PASS: actual Maa 5.13.1 resource load, TCP Agent handshake, Custom action/OCR guard, zero clicks outside record page')
+            print('PASS: actual Maa resource load, TCP Agent handshake, Custom action/OCR guard, zero clicks outside record page')
             if '--synthetic' in sys.argv:
                 from PIL import Image, ImageDraw, ImageFont
                 image = Image.new('RGB', (1280, 720), 'white')

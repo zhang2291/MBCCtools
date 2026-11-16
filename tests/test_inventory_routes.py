@@ -46,7 +46,7 @@ class InventoryRouteTests(unittest.TestCase):
         self.assertEqual(names.index('仓库识别'), names.index('每日体力用途') + 1)
         task = next(task for task in interface['task'] if task['name'] == '仓库识别')
         self.assertFalse(task['default_check'])
-        self.assertNotIn('国际服', task['resource'])
+        self.assertEqual(['官服'], task['resource'])
 
 
 if __name__ == '__main__':

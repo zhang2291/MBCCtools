@@ -1,15 +1,4 @@
-import os
 import sys
-from pathlib import Path
-
-# FlowScope ships its own MaaFramework. Its Agent must use the same protocol,
-# while normal desktop runs retain their existing DLLs and explicit overrides.
-if (sys.platform == "win32" and os.environ.get("PI_CLIENT_NAME") == "MPE"
-        and not os.environ.get("MAAFW_BINARY_PATH")):
-    native_dir = (Path(__file__).resolve().parent.parent / "tools"
-                  / "MaaPipelineEditor" / "runtime" / "maafw" / "bin")
-    if (native_dir / "MaaAgentServer.dll").is_file():
-        os.environ["MAAFW_BINARY_PATH"] = str(native_dir)
 
 from maa.agent.agent_server import AgentServer
 from maa.toolkit import Toolkit

@@ -516,18 +516,21 @@ class GachaRecordPage(CustomRecognition):
             _log(f"GachaRecordPage override_next({next_node}) 失败，沿用节点静态 next")
         return self.AnalyzeResult(box=box, detail=detail)
 
-    def _scan_fresh(self, session, rows, keys, rarities):
-        """整页逐行与档案去重比对：出现次数超过已存次数的才算新记录
-        （十连里同秒重复的同名条目靠这个计数规则保留）。"""
+    def _fresh_row_indices(self, session, rows, keys):
         fresh = []
-        for cells, key, rarity in zip(rows, keys, rarities):
+        for index, (cells, key) in enumerate(zip(rows, keys)):
             if len(cells) < 3:
-                # 一条正经记录至少有 时间/卡池/名称 三列；空池的提示语、OCR 截断的行都不是记录
                 continue
             session.run_counts[key] = session.run_counts.get(key, 0) + 1
             if session.run_counts[key] > session.store_counts.get(key, 0):
-                fresh.append((cells, key, rarity))
+                fresh.append(index)
         return fresh
+
+    def _scan_fresh(self, session, rows, keys, rarities):
+        """整页逐行与档案去重比对：出现次数超过已存次数的才算新记录
+        （十连里同秒重复的同名条目靠这个计数规则保留）。"""
+        return [(rows[index], keys[index], rarities[index])
+                for index in self._fresh_row_indices(session, rows, keys)]
 
     @_locked
     def analyze(self, context, argv):
@@ -589,21 +592,27 @@ class GachaRecordPage(CustomRecognition):
                     if not rows:
                         outcome = ("empty", {})
                     else:
-                        rarities = _rarity_by_row(
-                            context, image, boxes,
-                            param.get("rarity_dir", "抽卡"),
-                            param.get("rarity_tiers") or [],
-                            float(param.get("rarity_floor", 0.5)),
-                        )
-                        unknown = [r for r in rarities if r and r.startswith("未知")]
-                        if unknown:
-                            _log(f"GachaRecordPage 有徽章没匹上任何档，需要往对应目录补图: {unknown}")
-                        fresh = self._scan_fresh(session, rows, keys, rarities)
-                        if stop_on_known and not fresh:
+                        fresh_indices = self._fresh_row_indices(session, rows, keys)
+                        if stop_on_known and not fresh_indices:
                             # 识别到已知停止：本页全是已入库的记录，下面的页只会更旧，
                             # 立即停（这一眼不是翻页后的确认，没有竞态，不需要重截）
                             outcome = ("known_stop", {})
                             break
+                        if fresh_indices:
+                            # 已知行不参与稀有度模板识别；重复采集整页已知时不再做三轮全图匹配。
+                            fresh_rarities = _rarity_by_row(
+                                context, image, [boxes[index] for index in fresh_indices],
+                                param.get("rarity_dir", "抽卡"),
+                                param.get("rarity_tiers") or [],
+                                float(param.get("rarity_floor", 0.5)),
+                            )
+                            unknown = [r for r in fresh_rarities if r and r.startswith("未知")]
+                            if unknown:
+                                _log(f"GachaRecordPage 有徽章没匹上任何档，需要往对应目录补图: {unknown}")
+                            fresh = [(rows[index], keys[index], rarity)
+                                     for index, rarity in zip(fresh_indices, fresh_rarities)]
+                        else:
+                            _log(f"GachaRecordPage 第 {page_no} 页均为已知记录，跳过稀有度识别")
                         outcome = None
             if outcome is None:
                 break

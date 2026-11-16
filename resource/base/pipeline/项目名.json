@@ -43,7 +43,15 @@
     },
     "任务间隔": {
         "enabled": true,
-        "post_delay": 3000
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [80, 350, 80, 50],
+                "expected": "公告"
+            }
+        },
+        "action": "DoNothing",
+        "timeout": 5000
     },
     "侧边点击": {
         "action": {

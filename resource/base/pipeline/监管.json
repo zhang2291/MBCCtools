@@ -77,7 +77,6 @@
                 ]
             }
         },
-        "post_delay": 1200,
         "focus": {
             "Node.Action.Succeeded": "一键收取资源"
         },
@@ -130,7 +129,6 @@
         "action": {
             "type": "Click"
         },
-        "post_delay": 1200,
         "focus": {
             "Node.Action.Succeeded": "进入监管界面"
         },
@@ -183,7 +181,6 @@
         "action": {
             "type": "Click"
         },
-        "post_delay": 800,
         "next": [
             "开始按钮"
         ]

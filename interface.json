@@ -19,20 +19,6 @@
       "path": [
         "resource/base"
       ]
-    },
-    {
-      "name": "B服",
-      "path": [
-        "resource/base",
-        "resource/bilibili"
-      ]
-    },
-    {
-      "name": "国际服",
-      "path": [
-        "resource/base",
-        "resource/global"
-      ]
     }
   ],
   "task": [
@@ -42,9 +28,7 @@
       "doc": "[color:orange]请注意[/color]\n有可能失败，建议手动进入主菜单后再运行",
       "default_check": true,
       "resource": [
-        "官服",
-        "B服",
-        "国际服"
+        "官服"
       ]
     },
     {
@@ -66,9 +50,7 @@
       "doc": "只收取监管系统积累的物资，不处理监管事件。适合每天登录时单独执行。",
       "default_check": false,
       "resource": [
-        "官服",
-        "B服",
-        "国际服"
+        "官服"
       ]
     },
     {
@@ -82,9 +64,7 @@
       "doc": "选择[b]「刷取材料」[/b]时需要同时选择材料\n\n选择[b]「关卡未开放备选」[/b]后，当日关卡未开放时会自动刷取备选关卡",
       "default_check": false,
       "resource": [
-        "官服",
-        "B服",
-        "国际服"
+        "官服"
       ]
     },
     {
@@ -92,7 +72,7 @@
       "entry": "仓库识别",
       "doc": "从首页进入仓库，识别道具、消耗品、异方晶和狄斯币。仅截图与滚动，不点开或使用物品。汇总自动保存到 data/inventory，未识别物品保留截图；结束后返回首页。可勾选放在每日体力用途后执行。",
       "default_check": false,
-      "resource": ["官服", "B服"]
+      "resource": ["官服"]
     },
     {
       "name": "每日/密令奖励",
@@ -102,9 +82,7 @@
       ],
       "default_check": false,
       "resource": [
-        "官服",
-        "B服",
-        "国际服"
+        "官服"
       ]
     },
     {
@@ -112,9 +90,7 @@
       "entry": "退出游戏",
       "default_check": false,
       "resource": [
-        "官服",
-        "B服",
-        "国际服"
+        "官服"
       ]
     },
     {
@@ -126,8 +102,7 @@
       "doc": "先手动进入游戏的抽卡记录页，再从独立“抽卡记录”页面选择池子类型并开始采集。首次建议完整识别。记录逐页自动保存，可在页面查看统计、一次导入或导出全部类型。当前识别模板适用于中文界面、1280×720 识别画面。",
       "default_check": false,
       "resource": [
-        "官服",
-        "B服"
+        "官服"
       ]
     }
   ],
@@ -647,9 +622,9 @@
   },
   "github": "https://github.com/zhang2291/MBCCtools",
   "agent": {
-    "child_exec": "python",
+    "child_exec": "./build-local-final/agent/python/python.exe",
     "child_args": [
-      "./agent/main.py"
+      "./agent/vscode.py"
     ]
   }
 }

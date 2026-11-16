@@ -50,11 +50,7 @@ cd D:\a-maa-dev\MBCCtools
   -Version "local"
 ```
 
-MaaPipelineEditor 需要保留在：
-
-```text
-MBCCtools\tools\MaaPipelineEditor
-```
+Pipeline 编辑统一使用 VSCode 的 Maa Support 插件，桌面运行目录不再内嵌 MaaPipelineEditor。
 
 最终运行目录：
 
@@ -108,7 +104,7 @@ MFAAvalonia\**\obj
 MaaFwApp\**\build
 ```
 
-保留源码、`.git`、`resource`、`interface.json`、`tools\MaaPipelineEditor` 和当前需要的构建脚本即可。
+保留源码、`.git`、`resource`、`interface.json` 和当前需要的构建脚本即可。
 
 ## License
 
