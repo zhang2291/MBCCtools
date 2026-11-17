@@ -36,21 +36,17 @@ D:\a-maa-dev\
 - Pipeline 与任务配置统一在 VSCode 中直接编辑 `MBCCtools` 根目录下的 `resource/` 与 `interface.json`。
 - 本地启动 `MFAAvalonia`（或运行编译出的 Debug/Release 程序）时，程序会自动寻找并挂载同级的 `MBCCtools` 源码开发目录，所有改动实时生效，无需反复复制或手动同步。
 
-### 2. 独立免安装包打包（可选）
+### 2. 编译发布电脑桌面端
 
-如需打包生成供分发使用的单机绿色包：
+如需编译并运行发布的 Release 版本：
 
 ```powershell
-# 1. 编译发布 MFAAvalonia
+# 编译发布 MFAAvalonia（Release win-x64）
 cd D:\a-maa-dev\MFAAvalonia
 dotnet publish .\MFAAvalonia.Desktop\MFAAvalonia.Desktop.csproj -c Release -r win-x64
 
-# 2. 组装输出独立绿色包
-cd D:\a-maa-dev\MBCCtools
-.\build_local_gui.ps1 `
-  -BaseDir "D:\a-maa-dev\MFAAvalonia\bin\AnyCPU\Release\win-x64\publish" `
-  -OutDir "D:\a-maa-dev\MBCCtools\build-local-final" `
-  -Version "local"
+# 启动桌面程序（已自动挂载 MBCCtools 开发源码目录作为数据与资源源，无需手动同步）
+& .\bin\AnyCPU\Release\win-x64\publish\MFAAvalonia.exe
 ```
 
 ## Android 版构建
