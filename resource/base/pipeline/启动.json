@@ -197,32 +197,56 @@
             "type": "OCR",
             "param": {
                 "roi": [
-                    885,
-                    105,
-                    187,
-                    61
+                    400,
+                    120,
+                    500,
+                    120
                 ],
-                "expected": "检测"
+                "expected": [
+                    "情绪检测",
+                    "开始检测",
+                    "系统工作中",
+                    "检测"
+                ]
             }
         },
         "action": {
             "type": "Click",
             "param": {
                 "target": [
-                    799,
-                    484,
-                    1,
-                    1
+                    650,
+                    390,
+                    180,
+                    30
                 ]
             }
         },
-        "post_wait_freezes": 600,
+        "post_wait_freezes": 1000,
         "focus": {
             "Node.Action.Succeeded": "情绪检测"
         },
         "next": [
             "情绪检测完成",
+            "情绪检测_点击推进",
             "前往补测"
+        ]
+    },
+    "情绪检测_点击推进": {
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    650,
+                    390,
+                    180,
+                    30
+                ]
+            }
+        },
+        "post_delay": 1000,
+        "next": [
+            "情绪检测完成",
+            "登录后处理"
         ]
     },
     "情绪检测完成": {
@@ -230,26 +254,32 @@
             "type": "OCR",
             "param": {
                 "roi": [
-                    619,
-                    372,
-                    123,
-                    67
+                    450,
+                    250,
+                    380,
+                    300
                 ],
-                "expected": "检测完成"
+                "expected": [
+                    "检测完成",
+                    "完成"
+                ]
             }
         },
         "action": {
             "type": "Click",
             "param": {
                 "target": [
-                    12,
-                    15,
-                    1,
-                    1
+                    43,
+                    41,
+                    20,
+                    20
                 ]
             }
         },
-        "post_wait_freezes": 1500
+        "post_wait_freezes": 1500,
+        "next": [
+            "登录后处理"
+        ]
     },
     "月卡": {
         "recognition": {
@@ -396,13 +426,14 @@
         ]
     },
     "登录后处理": {
-        "timeout": 25000,
+        "timeout": 40000,
         "next": [
             "[JumpBack]登录",
+            "[JumpBack]情绪检测",
+            "[JumpBack]前往补测",
             "[JumpBack]关闭四星皮肤弹窗",
             "[JumpBack]一般弹窗",
             "[JumpBack]刮刮乐",
-            "[JumpBack]情绪检测",
             "[JumpBack]禁闭者生日",
             "[JumpBack]月卡提示 - 取消",
             "[JumpBack]月卡",
