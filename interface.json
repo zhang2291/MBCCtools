@@ -86,6 +86,15 @@
       ]
     },
     {
+      "name": "邮件领取",
+      "entry": "邮箱",
+      "doc": "检查主界面邮箱是否有待办小黄点，若有则进入邮箱点击快速处理领取物资并返回主页；无待办则自动跳过。",
+      "default_check": false,
+      "resource": [
+        "官服"
+      ]
+    },
+    {
       "name": "退出游戏",
       "entry": "退出游戏",
       "default_check": false,

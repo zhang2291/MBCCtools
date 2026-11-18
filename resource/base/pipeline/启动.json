@@ -6,8 +6,8 @@
                 "roi": [
                     950,
                     20,
-                    280,
-                    150
+                    300,
+                    180
                 ],
                 "template": [
                     "弹窗关闭按钮.png"
@@ -17,7 +17,7 @@
         "action": {
             "type": "Click"
         },
-        "post_wait_freezes": 1000,
+        "post_delay": 500,
         "focus": {
             "Node.Action.Succeeded": "关闭一般弹窗"
         }
@@ -34,6 +34,7 @@
                 ],
                 "expected": [
                     "系统公告",
+                    "活动公告",
                     "狄斯资讯",
                     "公告"
                 ]
@@ -45,12 +46,12 @@
                 "target": [
                     60,
                     360,
-                    10,
-                    10
+                    1,
+                    1
                 ]
             }
         },
-        "post_delay": 1000,
+        "post_delay": 600,
         "focus": {
             "Node.Action.Succeeded": "关闭公告"
         }
@@ -67,6 +68,7 @@
                 ],
                 "expected": [
                     "系统公告",
+                    "活动公告",
                     "狄斯资讯",
                     "公告"
                 ]
@@ -78,45 +80,12 @@
                 "target": [
                     60,
                     360,
-                    10,
-                    10
+                    1,
+                    1
                 ]
             }
         },
-        "post_delay": 1000
-    },
-    "关闭四星皮肤弹窗": {
-        "recognition": {
-            "type": "OCR",
-            "param": {
-                "roi": [
-                    150,
-                    520,
-                    960,
-                    100
-                ],
-                "expected": [
-                    "单独购买",
-                    "2580",
-                    "168"
-                ]
-            }
-        },
-        "action": {
-            "type": "Click",
-            "param": {
-                "target": [
-                    1070,
-                    90,
-                    20,
-                    20
-                ]
-            }
-        },
-        "post_wait_freezes": 1000,
-        "focus": {
-            "Node.Action.Succeeded": "关闭四星皮肤弹窗"
-        }
+        "post_delay": 600
     },
     "关闭界面1": {
         "recognition": {
@@ -203,10 +172,7 @@
                     120
                 ],
                 "expected": [
-                    "情绪检测",
-                    "开始检测",
-                    "系统工作中",
-                    "检测"
+                    "开始检测"
                 ]
             }
         },
@@ -221,29 +187,29 @@
                 ]
             }
         },
-        "post_wait_freezes": 1000,
+        "post_delay": 800,
         "focus": {
             "Node.Action.Succeeded": "情绪检测"
         },
         "next": [
             "情绪检测完成",
-            "情绪检测_点击推进",
+            "情绪检测_推进对话",
             "前往补测"
         ]
     },
-    "情绪检测_点击推进": {
+    "情绪检测_推进对话": {
         "action": {
             "type": "Click",
             "param": {
                 "target": [
-                    650,
-                    390,
-                    180,
+                    90,
+                    600,
+                    30,
                     30
                 ]
             }
         },
-        "post_delay": 1000,
+        "post_delay": 800,
         "next": [
             "情绪检测完成",
             "登录后处理"
@@ -256,12 +222,15 @@
                 "roi": [
                     450,
                     250,
-                    380,
+                    450,
                     300
                 ],
                 "expected": [
                     "检测完成",
-                    "完成"
+                    "结算检测",
+                    "服从度已提升",
+                    "获得奖励物资",
+                    "检测报告"
                 ]
             }
         },
@@ -269,14 +238,14 @@
             "type": "Click",
             "param": {
                 "target": [
-                    43,
-                    41,
-                    20,
-                    20
+                    90,
+                    600,
+                    30,
+                    30
                 ]
             }
         },
-        "post_wait_freezes": 1500,
+        "post_delay": 800,
         "next": [
             "登录后处理"
         ]
@@ -322,8 +291,12 @@
         "action": {
             "type": "Click"
         },
+        "post_delay": 800,
+        "focus": {
+            "Node.Action.Succeeded": "月卡提示-点击取消"
+        },
         "next": [
-            "点击取消"
+            "登录后处理"
         ]
     },
     "点击": {
@@ -404,7 +377,12 @@
         "post_delay": 4000
     },
     "登录前处理": {
-        "timeout": 60000,
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 10000
+            }
+        },
         "next": [
             "登录",
             "[JumpBack]关闭公告",
@@ -412,33 +390,43 @@
         ],
         "on_error": [
             "登录前异常处理"
-        ]
+        ],
+        "timeout": 60000
     },
     "登录前异常处理": {
-        "timeout": 20000,
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 10000
+            }
+        },
         "next": [
             "[JumpBack]关闭公告_异常处理",
-            "[JumpBack]登录_异常处理",
-            "首页"
-        ],
-        "on_error": [
-            "登录后处理"
+            "都没有",
+            "[JumpBack]登录_异常处理"
         ]
     },
     "登录后处理": {
-        "timeout": 40000,
+        "action": {
+            "type": "DoNothing",
+            "param": {
+                "timeout": 5000
+            }
+        },
         "next": [
             "[JumpBack]登录",
+            "[JumpBack]情绪检测完成",
             "[JumpBack]情绪检测",
             "[JumpBack]前往补测",
+            "[JumpBack]月卡提示 - 取消",
             "[JumpBack]关闭四星皮肤弹窗",
             "[JumpBack]一般弹窗",
             "[JumpBack]刮刮乐",
             "[JumpBack]禁闭者生日",
-            "[JumpBack]月卡提示 - 取消",
             "[JumpBack]月卡",
             "首页"
-        ]
+        ],
+        "timeout": 25000
     },
     "禁闭者生日": {
         "recognition": {
@@ -535,6 +523,11 @@
             "关闭界面1"
         ]
     },
+    "都没有": {
+        "next": [
+            "登录后处理"
+        ]
+    },
     "首页": {
         "recognition": {
             "type": "OCR",
@@ -578,11 +571,41 @@
             }
         },
         "timeout": 3000,
-        "on_error": [
-            "登录后处理"
-        ],
         "focus": {
             "Node.Recognition.Succeeded": "确认到首页"
+        }
+    },
+    "关闭四星皮肤弹窗": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    150,
+                    520,
+                    960,
+                    100
+                ],
+                "expected": [
+                    "单独购买",
+                    "2580",
+                    "168"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1070,
+                    90,
+                    20,
+                    20
+                ]
+            }
+        },
+        "post_delay": 800,
+        "focus": {
+            "Node.Action.Succeeded": "关闭四星皮肤弹窗"
         }
     }
 }

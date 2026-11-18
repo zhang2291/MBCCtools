@@ -214,6 +214,26 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual(4, scan_page.call_count)
             self.assertEqual('已到列表底部', inventory._session['categories']['道具']['reason'])
 
+    def test_unknown_items_across_pages_deduplicated(self):
+        # Two consecutive pages showing the same unknown item with small pixel shift/noise
+        image1 = np.zeros((720, 1280, 3), dtype=np.uint8)
+        image1[249+16:249+134, 290+8:290+126] = 120
+        image2 = np.zeros((720, 1280, 3), dtype=np.uint8)
+        # Small pixel variation (e.g. mean diff 3.0)
+        image2[249+16:249+134, 290+8:290+126] = 123
+        context = SimpleNamespace(
+            tasker=SimpleNamespace(stopping=False),
+            run_recognition_direct=Mock(side_effect=or_response),
+        )
+        output = dict(items={}, unknown={})
+        cache, unknown_crops = {}, {}
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp), \
+                patch.object(inventory, '_cards', return_value=[(290, 249, 206)]):
+            inventory.InventoryBegin().run(None, None)
+            inventory._scan_page(context, image1, 'items', [], output, 0, cache, unknown_crops)
+            inventory._scan_page(context, image2, 'items', [], output, 1, cache, unknown_crops)
+        self.assertEqual(1, len(output['unknown']), 'Unknown items on consecutive pages should be deduplicated')
+
 
 if __name__ == '__main__':
     unittest.main()

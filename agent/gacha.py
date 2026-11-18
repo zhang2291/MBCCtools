@@ -103,6 +103,7 @@ class _RecordSession:
         self.store_counts = store_counts
         self.run_counts = {}
         self.last_page = None
+        self.last_keys = None
         self.back_keys = None
         self.stall_retries = 0
         self.attempts = 0
@@ -170,6 +171,7 @@ def _load_store(archive_dir):
 
 
 def _get_session(archive):
+    archive = str(archive)
     session = _sessions.get(archive)
     if session is not None:
         return session
@@ -193,10 +195,18 @@ def _read_page_number(context, image, page_roi, min_score):
     2026-10-10 常驻池末页与活动池第 50 页都是如此。"""
     x, y, w, h = page_roi
     crop = image[y:y + h, x:x + w]
-    if cv2 is not None and crop.size:
-        crop = cv2.resize(crop, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
-    elif crop.size:
-        crop = np.repeat(np.repeat(crop, 4, axis=0), 4, axis=1)
+    if not crop.size:
+        return None
+    try:
+        from PIL import Image as _PILImage
+        pil_im = _PILImage.fromarray(crop[:, :, ::-1] if crop.ndim == 3 and crop.shape[2] == 3 else crop)
+        enlarged = pil_im.resize((w * 4, h * 4), _PILImage.BICUBIC)
+        crop = np.array(enlarged)[:, :, ::-1] if crop.ndim == 3 and crop.shape[2] == 3 else np.array(enlarged)
+    except Exception:
+        if cv2 is not None:
+            crop = cv2.resize(crop, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
+        else:
+            crop = np.repeat(np.repeat(crop, 4, axis=0), 4, axis=1)
     detail = context.run_recognition_direct(
         JRecognitionType.OCR,
         JOCR(roi=[0, 0, crop.shape[1], crop.shape[0]]),
@@ -207,10 +217,12 @@ def _read_page_number(context, image, page_roi, min_score):
     for result in results:
         text = (getattr(result, "text", "") or "").strip()
         score = float(getattr(result, "score", 0.0))
-        if not text.isdigit() or score < min_score:
+        digits = re.findall(r"\d+", text)
+        if not digits or score < min_score:
             continue
+        val = int(digits[0])
         if best is None or score > best[0]:
-            best = (score, int(text))
+            best = (score, val)
     return best[1] if best else None
 
 
@@ -330,21 +342,39 @@ def _row_sig(cells):
     return re.sub(r"\s+", "", "".join(cells))
 
 
-# 实测（2026-09-29 逐池截图）：抽卡页四个池是 活动/综合/定向/常驻，
-# 记录页页头对应「{类型}追踪 · 近期抽卡记录(UTC+8)」。注意没有"常规"这个类型。
-DEFAULT_POOL_TYPES = ["活动", "综合", "定向", "常驻"]
+# 实测与官方卡池类型：活动/常规/限定/返场限定/定向/综合/统合/常驻/特选/新手 等
+# 记录页页头对应「{类型}追踪 · 近期抽卡记录(UTC+8)」。
+DEFAULT_POOL_TYPES = [
+    "活动",
+    "常规",
+    "限定",
+    "返场限定",
+    "定向",
+    "综合",
+    "统合",
+    "常驻",
+    "特选",
+    "新手",
+]
 # OCR 把小字号的「综合」标签读成"统合"（置信度 1.0，形近字），类型匹配要把别名算上
 TYPE_ALIASES = {"综合": ["统合"]}
 
 
 def _match_type(text, types):
     """按包含匹配类型词（text 需已去空白），命中别名也算，返回规范类型名；没命中返回 None。"""
-    for t in types:
+    # 优先按长度倒序匹配已知列表，保证「返场限定」优先于「限定」
+    for t in sorted(types, key=len, reverse=True):
         if t in text:
             return t
     for t, aliases in TYPE_ALIASES.items():
         if t in types and any(a in text for a in aliases):
             return t
+    # 动态匹配：若文本含「XX追踪」，直接提取前面的类型名（例如 新卡池名追踪）
+    m = re.search(r"([\u4e00-\u9fa5·A-Za-z0-9]{2,8})追踪", text)
+    if m:
+        extracted = m.group(1).replace("·", "").strip()
+        if extracted:
+            return extracted
     return None
 
 
@@ -391,8 +421,29 @@ class GachaRecordPoolType(CustomRecognition):
                 best = (score, matched, text, box)
 
         if best is None:
+            # 门卫检查：是否处于抽卡记录页面（含有「近期抽卡记录」、「抽卡记录」或「追踪」）
+            gate_found = any(
+                "近期抽卡记录" in (getattr(r, "text", "") or "")
+                or "抽卡记录" in (getattr(r, "text", "") or "")
+                or "追踪" in (getattr(r, "text", "") or "")
+                for r in results
+            )
+            if gate_found:
+                session.pool_type = None
+                _log(f"GachaRecordPoolType 在 roi={roi} 未精确匹配追踪类型，按「未判」继续采集")
+                box = [roi[0], roi[1], roi[2], roi[3]]
+                for r in results:
+                    b = _rect_of(getattr(r, "box", None))
+                    if b:
+                        box = b
+                        break
+                return self.AnalyzeResult(
+                    box=box,
+                    detail={"type": None, "text": "未判", "score": 0.5},
+                )
+
             session.pool_type = None
-            _log(f"GachaRecordPoolType 在 roi={roi} 没认出追踪类型（{types}），本批记录不带 type")
+            _log(f"GachaRecordPoolType 在 roi={roi} 没认出追踪类型（{types}），且未见记录页门卫")
             return None
 
         session.pool_type = best[1]
@@ -578,42 +629,45 @@ class GachaRecordPage(CustomRecognition):
             else:
                 # 页码是"翻页是否生效 / 是否到最后一页"的主判据（裁出放大后 OCR，可靠）
                 page_no = _read_page_number(context, image, page_roi, min_score)
-                if page_no is None:
-                    # 翻过最后一页（游戏把页码显示成"-"）或不在记录页
-                    outcome = ("no_more_pages", {})
-                    rows = boxes = keys = rarities = None
-                elif page_no == session.last_page:
+                rows, boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
+                keys = [_row_sig(cells) for cells in rows]
+                if not rows:
+                    outcome = ("empty", {})
+                elif page_no is not None and page_no == session.last_page:
                     # 页码没动 = 翻页没生效（点击延迟/丢失）或已在最后一页
                     outcome = ("no_advance", {"page": page_no})
+                elif page_no is None and session.last_keys and keys == session.last_keys:
+                    # 页码未读出，但行签名与上一页一致 = 未翻页
+                    outcome = ("no_advance", {"page": session.last_page})
                 else:
+                    if page_no is None:
+                        # 行签名不同说明已成功翻页，页码偶然未识别时按上一页递增推导
+                        page_no = (session.last_page or 0) + 1
+                        _log(f"GachaRecordPage 底栏页码读数为空，根据记录行内容变化推导为第 {page_no} 页")
                     session.last_page = page_no
-                    rows, boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
-                    keys = [_row_sig(cells) for cells in rows]
-                    if not rows:
-                        outcome = ("empty", {})
+                    session.last_keys = keys
+                    fresh_indices = self._fresh_row_indices(session, rows, keys)
+                    if stop_on_known and not fresh_indices:
+                        # 识别到已知停止：本页全是已入库的记录，下面的页只会更旧，
+                        # 立即停（这一眼不是翻页后的确认，没有竞态，不需要重截）
+                        outcome = ("known_stop", {})
+                        break
+                    if fresh_indices:
+                        # 已知行不参与稀有度模板识别；重复采集整页已知时不再做三轮全图匹配。
+                        fresh_rarities = _rarity_by_row(
+                            context, image, [boxes[index] for index in fresh_indices],
+                            param.get("rarity_dir", "抽卡"),
+                            param.get("rarity_tiers") or [],
+                            float(param.get("rarity_floor", 0.5)),
+                        )
+                        unknown = [r for r in fresh_rarities if r and r.startswith("未知")]
+                        if unknown:
+                            _log(f"GachaRecordPage 有徽章没匹上任何档，需要往对应目录补图: {unknown}")
+                        fresh = [(rows[index], keys[index], rarity)
+                                 for index, rarity in zip(fresh_indices, fresh_rarities)]
                     else:
-                        fresh_indices = self._fresh_row_indices(session, rows, keys)
-                        if stop_on_known and not fresh_indices:
-                            # 识别到已知停止：本页全是已入库的记录，下面的页只会更旧，
-                            # 立即停（这一眼不是翻页后的确认，没有竞态，不需要重截）
-                            outcome = ("known_stop", {})
-                            break
-                        if fresh_indices:
-                            # 已知行不参与稀有度模板识别；重复采集整页已知时不再做三轮全图匹配。
-                            fresh_rarities = _rarity_by_row(
-                                context, image, [boxes[index] for index in fresh_indices],
-                                param.get("rarity_dir", "抽卡"),
-                                param.get("rarity_tiers") or [],
-                                float(param.get("rarity_floor", 0.5)),
-                            )
-                            unknown = [r for r in fresh_rarities if r and r.startswith("未知")]
-                            if unknown:
-                                _log(f"GachaRecordPage 有徽章没匹上任何档，需要往对应目录补图: {unknown}")
-                            fresh = [(rows[index], keys[index], rarity)
-                                     for index, rarity in zip(fresh_indices, fresh_rarities)]
-                        else:
-                            _log(f"GachaRecordPage 第 {page_no} 页均为已知记录，跳过稀有度识别")
-                        outcome = None
+                        _log(f"GachaRecordPage 第 {page_no} 页均为已知记录，跳过稀有度识别")
+                    outcome = None
             if outcome is None:
                 break
             if attempt == 0:

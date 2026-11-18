@@ -5,7 +5,7 @@ import pathlib
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 
@@ -114,6 +114,77 @@ class GachaTests(unittest.TestCase):
         ctx = SimpleNamespace(run_recognition_direct=recognize)
         with patch.object(agent, 'cv2', None):
             self.assertEqual(12, agent._read_page_number(ctx, np.zeros((720, 1280, 3), dtype=np.uint8), [735, 625, 65, 36], .5))
+
+    def test_page_number_none_infers_page_when_rows_change(self):
+        new = ('2026-10-15 10:02:00', '测试池', '新页角色')
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            session.last_page = 16
+            session.last_keys = ['old_key_16']
+            context = SimpleNamespace(
+                override_next=lambda node, next_list: next_list[0] == '抽卡记录翻页',
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别', custom_recognition_param={},
+            )
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', return_value=None), \
+                    patch.object(agent, '_ocr_rows', return_value=([new], [[440, 300, 640, 30]])), \
+                    patch.object(agent, '_rarity_by_row', return_value=['普']):
+                result = agent.GachaRecordPage().analyze(context, argv)
+            self.assertIsNotNone(result)
+            self.assertEqual(17, session.last_page)
+            self.assertEqual(1, session.new_count)
+
+    def test_pool_type_matching_and_recognition(self):
+        self.assertEqual('返场限定', agent._match_type('返场限定追踪·近期抽卡记录(UTC+8)', agent.DEFAULT_POOL_TYPES))
+        self.assertEqual('限定', agent._match_type('限定追踪·近期抽卡记录(UTC+8)', agent.DEFAULT_POOL_TYPES))
+        self.assertEqual('活动', agent._match_type('活动追踪·近期抽卡记录(UTC+8)', agent.DEFAULT_POOL_TYPES))
+        self.assertEqual('常规', agent._match_type('常规追踪·近期抽卡记录(UTC+8)', agent.DEFAULT_POOL_TYPES))
+        self.assertEqual('统合', agent._match_type('统合追踪·近期抽卡记录(UTC+8)', agent.DEFAULT_POOL_TYPES))
+        self.assertEqual('特殊联动', agent._match_type('特殊联动追踪·近期抽卡记录(UTC+8)', agent.DEFAULT_POOL_TYPES))
+
+        with tempfile.TemporaryDirectory() as td:
+            archive_path = pathlib.Path(td)
+            session = agent._get_session(archive_path)
+            context = MagicMock()
+            argv = MagicMock()
+            argv.roi = MagicMock(x=0, y=0, w=0, h=0)
+            argv.image = np.zeros((720, 1280, 3), dtype=np.uint8)
+            argv.custom_recognition_param = json.dumps({"archive": str(archive_path)})
+
+            class DummyOCRResult:
+                def __init__(self, text, box, score):
+                    self.text = text
+                    self.box = box
+                    self.score = score
+
+            # 1. 命中返场限定
+            detail1 = MagicMock()
+            detail1.all_results = [DummyOCRResult('返场限定追踪·近期抽卡记录(UTC+8)', [440, 225, 397, 28], 0.98)]
+            context.run_recognition_direct.return_value = detail1
+            res1 = agent.GachaRecordPoolType().analyze(context, argv)
+            self.assertIsNotNone(res1)
+            self.assertEqual('返场限定', session.pool_type)
+
+            # 2. 未能精确识别类型，但存在门卫词（抽卡记录页），降级为未判而不阻断任务
+            detail2 = MagicMock()
+            detail2.all_results = [DummyOCRResult('近期抽卡记录(UTC+8)', [440, 225, 300, 28], 0.98)]
+            context.run_recognition_direct.return_value = detail2
+            res2 = agent.GachaRecordPoolType().analyze(context, argv)
+            self.assertIsNotNone(res2)
+            self.assertIsNone(session.pool_type)
+
+            # 3. 不在记录页（非门卫词），返回 None
+            detail3 = MagicMock()
+            detail3.all_results = [DummyOCRResult('主界面其他内容', [100, 100, 200, 30], 0.95)]
+            context.run_recognition_direct.return_value = detail3
+            res3 = agent.GachaRecordPoolType().analyze(context, argv)
+            self.assertIsNone(res3)
 
     def test_option_overrides_use_v2_and_keep_existing_tasks(self):
         interface = json.loads((ROOT / 'interface.json').read_text(encoding='utf-8'))

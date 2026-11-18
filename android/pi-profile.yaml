@@ -15,8 +15,11 @@ include:
   - agent/**
 
 exclude:
+  - agent/python/**
+  - agent/.venv/**
   - agent/**/__pycache__/**
   - agent/**/*.pyc
+  - agent/**/.pytest_cache/**
 
 app:
   id: mbcctools

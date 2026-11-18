@@ -67,12 +67,19 @@
             210,
             65
         ],
+        "target": [
+            70,
+            150,
+            40,
+            20
+        ],
         "action": "Click",
         "timeout": 5000,
-        "max_hit": 1,
-        "post_delay": 400,
+        "max_hit": 5,
+        "post_delay": 500,
         "next": [
-            "仓库识别_确认道具"
+            "仓库识别_确认道具",
+            "仓库识别_选择道具"
         ],
         "on_error": [
             "仓库识别_保存汇总"
@@ -88,12 +95,13 @@
             65
         ],
         "action": "DoNothing",
-        "timeout": 5000,
+        "timeout": 4000,
         "max_hit": 1,
         "next": [
             "仓库识别_扫描道具"
         ],
         "on_error": [
+            "仓库识别_选择道具",
             "仓库识别_保存汇总"
         ]
     },
@@ -128,12 +136,19 @@
             210,
             60
         ],
+        "target": [
+            70,
+            245,
+            40,
+            20
+        ],
         "action": "Click",
         "timeout": 5000,
-        "max_hit": 1,
-        "post_delay": 400,
+        "max_hit": 5,
+        "post_delay": 500,
         "next": [
-            "仓库识别_确认消耗品"
+            "仓库识别_确认消耗品",
+            "仓库识别_选择消耗品"
         ],
         "on_error": [
             "仓库识别_保存汇总"
@@ -149,12 +164,13 @@
             65
         ],
         "action": "DoNothing",
-        "timeout": 5000,
+        "timeout": 4000,
         "max_hit": 1,
         "next": [
             "仓库识别_扫描消耗品"
         ],
         "on_error": [
+            "仓库识别_选择消耗品",
             "仓库识别_保存汇总"
         ]
     },

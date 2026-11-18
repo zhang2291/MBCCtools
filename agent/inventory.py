@@ -202,12 +202,14 @@ def _match_card(context, image, category, catalog, roi):
     return candidates
 
 
-def _scan_page(context, image, category, catalog, output, page, match_cache=None):
+def _scan_page(context, image, category, catalog, output, page, match_cache=None, unknown_crops=None):
     cards = _cards(context, image)
     folder = _root() / 'captures' / _session['run_id'] / category
     _save_image(folder / f'page-{page:02}.png', image)
     if match_cache is None:
         match_cache = {}
+    if unknown_crops is None:
+        unknown_crops = {}
     for x, y, quantity in cards:
         if getattr(context.tasker, 'stopping', False):
             raise InterruptedError('用户停止')
@@ -228,10 +230,22 @@ def _scan_page(context, image, category, catalog, output, page, match_cache=None
             merge_item(output['items'], dict(id=entry['id'], name=entry['name'],
                        category=category, quantity=quantity, score=round(score, 4)))
         else:
-            digest = crop_digest[:16]
-            path = folder / f'unknown-{digest}.png'
-            _save_image(path, crop)
-            output['unknown'][digest] = dict(quantity=quantity, image=str(path), page=page)
+            crop_float = crop.astype(float)
+            matched_digest = None
+            for d, (prev_arr, prev_entry) in unknown_crops.items():
+                if np.abs(crop_float - prev_arr).mean() <= 12.0:
+                    matched_digest = d
+                    if prev_entry.get('quantity') is None and quantity is not None:
+                        prev_entry['quantity'] = quantity
+                        output['unknown'][d]['quantity'] = quantity
+                    break
+            if matched_digest is None:
+                digest = crop_digest[:16]
+                path = folder / f'unknown-{digest}.png'
+                _save_image(path, crop)
+                entry = dict(quantity=quantity, image=str(path), page=page)
+                output['unknown'][digest] = entry
+                unknown_crops[digest] = (crop_float, entry)
     return len(cards)
 
 
@@ -300,6 +314,7 @@ class InventoryScanCategory(CustomAction):
                 return False
             catalog = _catalog()
             match_cache = {}
+            unknown_crops = {}
             for name, roi in [('异方晶', [866, 30, 93, 37]), ('狄斯币', [1012, 30, 114, 37])]:
                 value = _number(context, image, roi)
                 if value is not None:
@@ -310,7 +325,7 @@ class InventoryScanCategory(CustomAction):
                 if getattr(context.tasker, 'stopping', False):
                     output['reason'] = '用户停止'
                     return False
-                count += _scan_page(context, image, category, catalog, output, page, match_cache)
+                count += _scan_page(context, image, category, catalog, output, page, match_cache, unknown_crops)
                 output['pages'] += 1
                 _log(f'{category}第{page+1}页：已识别{len(output["items"])}种，未知图标{len(output["unknown"])}个')
                 newer = _swipe(controller, True)

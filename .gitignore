@@ -457,6 +457,7 @@ android/output/
 !android/build-android.ps1
 
 android/agent-runtime/
+agent/python/
 data/
 agent/__pycache__/
 agent/**/__pycache__/

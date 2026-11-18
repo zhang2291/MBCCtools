@@ -15,15 +15,22 @@ $adoptiumJdks = if (Test-Path 'C:\Program Files\Eclipse Adoptium') {
         Sort-Object LastWriteTime -Descending |
         Select-Object -ExpandProperty FullName
 } else { @() }
+$localJdks = if (Test-Path 'C:\jdk') {
+    Get-ChildItem 'C:\jdk' -Directory -Filter 'jdk*17*' |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -ExpandProperty FullName
+} else { @() }
 $jdkCandidates = @(
     $env:JAVA_HOME
-) + @($adoptiumJdks) + @(
+) + @($localJdks) + @($adoptiumJdks) + @(
+    'C:\jdk\jdk17',
     'C:\Program Files\JetBrains\IntelliJ IDEA 2024.3.1.1\jbr',
     'C:\Program Files\JetBrains\PyCharm 2024.1\jbr'
-) | Where-Object {
+) | Select-Object -Unique | Where-Object {
     $_ -and
     (Test-Path (Join-Path $_ 'bin\java.exe')) -and
-    (Test-Path (Join-Path $_ 'bin\jlink.exe'))
+    (Test-Path (Join-Path $_ 'bin\jlink.exe')) -and
+    ((& (Join-Path $_ 'bin\java.exe') -version 2>&1 | Select-String 'version "17\.').Count -gt 0)
 }
 if (-not $jdkCandidates -and (Get-Command mise -ErrorAction SilentlyContinue)) {
     $miseJdk = & mise where java@17.0.12 2>$null
@@ -31,23 +38,30 @@ if (-not $jdkCandidates -and (Get-Command mise -ErrorAction SilentlyContinue)) {
         $jdkCandidates = @($miseJdk.Trim())
     }
 }
-if (-not $jdkCandidates) { throw 'Full JDK 17+ with jlink not found.' }
+if (-not $jdkCandidates) { throw 'Full JDK 17 with jlink not found.' }
 $env:JAVA_HOME = @($jdkCandidates)[0]
 $env:Path = "$($env:JAVA_HOME)\bin;$env:Path"
+Write-Host "Using JDK 17: $($env:JAVA_HOME)"
 
 if (-not $AndroidSdk) { $AndroidSdk = $env:ANDROID_HOME }
+if (-not $AndroidSdk -and (Test-Path 'D:\Android\Sdk')) { $AndroidSdk = 'D:\Android\Sdk' }
 if (-not $AndroidSdk -or -not (Test-Path $AndroidSdk)) {
     throw 'Android SDK not found. Pass -AndroidSdk <path> or set ANDROID_SDK_ROOT.'
 }
 $sdkNormalized = $AndroidSdk.Replace('\', '/')
 $profileNormalized = $profile.Replace('\', '/')
 $debugAbi = if ($Emulator) { 'arm64-v8a,x86_64' } else { 'arm64-v8a' }
-@(
+$localPropsPath = Join-Path $MaaFwAppDir 'local.properties'
+$desiredProps = @(
     "sdk.dir=$sdkNormalized",
     "pi.profile=$profileNormalized",
     "build.debugAbi=$debugAbi",
     "build.releaseAbi=arm64-v8a"
-) | Set-Content -Path (Join-Path $MaaFwAppDir 'local.properties') -Encoding ASCII
+) -join "`r`n"
+$currentProps = if (Test-Path $localPropsPath) { (Get-Content -Raw $localPropsPath).Trim() } else { '' }
+if ($currentProps -ne $desiredProps) {
+    Set-Content -Path $localPropsPath -Value $desiredProps -Encoding ASCII
+}
 
 $needFrameworkSetup = -not (Test-Path (Join-Path $MaaFwAppDir '.maafwversion')) -or
     ($Emulator -and -not (Test-Path (Join-Path $MaaFwAppDir 'app\src\main\jniLibs\x86_64')))
@@ -81,6 +95,7 @@ if ($manifest.provides.maafw -ne $frameworkVersion) {
 }
 if ($Emulator) { throw 'The gacha agent profile currently targets arm64-v8a phones only.' }
 
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
 Push-Location $MaaFwAppDir
 try {
     $task = if ($Release) { ':app:assembleRelease' } else { ':app:assembleDebug' }
@@ -89,6 +104,7 @@ try {
 } finally {
     Pop-Location
 }
+$sw.Stop()
 
 $kind = if ($Release) { 'release' } else { 'debug' }
 $apk = Get-ChildItem (Join-Path $MaaFwAppDir "app\build\outputs\apk\$kind") -Filter '*.apk' -Recurse |
@@ -99,7 +115,13 @@ New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 $suffix = if ($Release) { 'release-arm64' } elseif ($Emulator) { 'debug-arm64-x86_64' } else { 'debug-arm64' }
 $outputApk = Join-Path $outputDir "MBCCtools-$suffix.apk"
 Copy-Item $apk.FullName $outputApk -Force
-Get-Item $outputApk | Select-Object FullName,Length,LastWriteTime
+$item = Get-Item $outputApk
+$sizeMb = [Math]::Round($item.Length / 1MB, 2)
+Write-Host ("APK built in {0:N1}s: {1} ({2} MB)" -f $sw.Elapsed.TotalSeconds, $item.FullName, $sizeMb)
+if ($sizeMb -gt 200) {
+    Write-Warning "APK size ($sizeMb MB) exceeds 200 MB! Check pi-profile.yaml excludes (e.g. agent/python/**)."
+}
+$item | Select-Object FullName,Length,LastWriteTime
 
 
 
