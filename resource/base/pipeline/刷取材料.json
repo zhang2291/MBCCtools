@@ -4,18 +4,19 @@
         "action": "DoNothing",
         "post_wait_freezes": 1000,
         "next": [
-            "进入新城",
-            "[JumpBack]狄斯西区to新城",
-            "[JumpBack]远邦to新城",
-            "[JumpBack]里湾to新城",
+            "进入新城二",
+            "[JumpBack]远邦to新城二",
+            "[JumpBack]新城一to新城二",
+            "[JumpBack]里湾to新城二",
+            "[JumpBack]狄斯西区to新城二",
             "[JumpBack]材料进入狄斯",
             "[JumpBack]材料导航回主页"
         ],
         "timeout": 3000
     },
-    "进入新城": {
+    "进入新城二": {
         "recognition": "OCR",
-        "expected": "^新城[·・.：:\\s]*[ⅠI1|]$",
+        "expected": "^新城[·・.：:\\s]*(?:Ⅱ|II|ll|11|\\|\\||2)$",
         "roi": [
             20,
             324,
@@ -25,45 +26,23 @@
         "action": "DoNothing",
         "post_wait_freezes": 1000,
         "next": [
-            "苍蓝穹顶入口",
+            "恩慈余光入口",
+            "[JumpBack]从左向右滑",
             "[JumpBack]从右向左滑"
         ],
-        "timeout": 3000,
-        "only_rec": true
+        "timeout": 3000
     },
-    "远邦to新城": {
+    "远邦to新城二": {
         "recognition": "OCR",
-        "expected": "远邦",
+        "expected": [
+            "远邦",
+            "遠邦"
+        ],
         "roi": [
-            31,
+            20,
             324,
-            124,
-            77
-        ],
-        "action": "Swipe",
-        "begin": [
-            63,
-            356,
-            1,
-            1
-        ],
-        "end": [
-            60,
-            461,
-            1,
-            1
-        ],
-        "post_wait_freezes": 1000,
-        "max_hit": 8
-    },
-    "里湾to新城": {
-        "recognition": "OCR",
-        "expected": "里湾",
-        "roi": [
-            31,
-            324,
-            124,
-            77
+            150,
+            76
         ],
         "action": "Swipe",
         "begin": [
@@ -79,7 +58,69 @@
             1
         ],
         "post_wait_freezes": 1000,
-        "max_hit": 8
+        "max_hit": 8,
+        "focus": {
+            "Node.Action.Succeeded": "从远邦向新城·Ⅱ切换"
+        }
+    },
+    "新城一to新城二": {
+        "recognition": "OCR",
+        "expected": "^新城[·・.：:\\s]*[ⅠI1|]$",
+        "roi": [
+            20,
+            324,
+            150,
+            76
+        ],
+        "action": "Swipe",
+        "begin": [
+            68,
+            462,
+            1,
+            1
+        ],
+        "end": [
+            71,
+            363,
+            1,
+            1
+        ],
+        "post_wait_freezes": 1000,
+        "max_hit": 8,
+        "focus": {
+            "Node.Action.Succeeded": "从新城·Ⅰ向新城·Ⅱ切换"
+        }
+    },
+    "里湾to新城二": {
+        "recognition": "OCR",
+        "expected": [
+            "里湾",
+            "里灣"
+        ],
+        "roi": [
+            20,
+            324,
+            150,
+            76
+        ],
+        "action": "Swipe",
+        "begin": [
+            68,
+            462,
+            1,
+            1
+        ],
+        "end": [
+            71,
+            363,
+            1,
+            1
+        ],
+        "post_wait_freezes": 1000,
+        "max_hit": 8,
+        "focus": {
+            "Node.Action.Succeeded": "从里湾向新城·Ⅱ切换"
+        }
     },
     "从右向左滑": {
         "recognition": "DirectHit",
@@ -114,25 +155,26 @@
             1,
             1
         ],
-        "post_wait_freezes": 1000
+        "post_wait_freezes": 1000,
+        "max_hit": 6
     },
     "滑动找关卡": {
         "recognition": "DirectHit",
         "action": "Swipe",
         "begin": [
-            200,
+            320,
             443,
             1,
             1
         ],
         "end": [
-            1000,
+            820,
             445,
             1,
             1
         ],
-        "duration": 400,
-        "post_wait_freezes": 1000,
+        "duration": 650,
+        "post_delay": 600,
         "next": [
             "目标材料关卡",
             "滑动找关卡",
@@ -145,19 +187,19 @@
         "recognition": "DirectHit",
         "action": "Swipe",
         "begin": [
-            1000,
+            820,
             445,
             1,
             1
         ],
         "end": [
-            200,
+            320,
             443,
             1,
             1
         ],
-        "duration": 400,
-        "post_wait_freezes": 1000,
+        "duration": 650,
+        "post_delay": 600,
         "timeout": 3000,
         "next": [
             "目标材料关卡",
@@ -167,7 +209,13 @@
     },
     "目标材料关卡": {
         "recognition": "OCR",
-        "expected": "^N\\s*10\\s*[-－–—]\\s*8$",
+        "expected": "^S\\s*2\\s*[-－–—]\\s*11$",
+        "roi": [
+            0,
+            340,
+            1280,
+            160
+        ],
         "action": "Click",
         "focus": {
             "Node.Action.Succeeded": "进入材料关卡"
@@ -180,9 +228,9 @@
             "[JumpBack]扫荡最大次数"
         ]
     },
-    "苍蓝穹顶入口": {
+    "恩慈余光入口": {
         "recognition": "OCR",
-        "expected": "^N\\s*(9|10)$",
+        "expected": "^S\\s*(1|2)$",
         "roi": [
             200,
             100,
@@ -192,13 +240,13 @@
         "action": "Click",
         "post_wait_freezes": 1000,
         "next": [
-            "苍蓝穹顶章节选择"
+            "恩慈余光章节选择"
         ],
         "timeout": 5000
     },
-    "苍蓝穹顶章节选择": {
+    "恩慈余光章节选择": {
         "recognition": "OCR",
-        "expected": "^N\\s*10$",
+        "expected": "^S\\s*2$",
         "roi": [
             960,
             410,
@@ -215,17 +263,17 @@
         ],
         "timeout": 800
     },
-    "狄斯西区to新城": {
+    "狄斯西区to新城二": {
         "recognition": "OCR",
         "expected": [
             "狄斯西区",
             "狄斯西區"
         ],
         "roi": [
-            31,
+            20,
             324,
-            124,
-            77
+            150,
+            76
         ],
         "action": "Swipe",
         "begin": [
@@ -243,7 +291,7 @@
         "post_wait_freezes": 1000,
         "max_hit": 8,
         "focus": {
-            "Node.Action.Succeeded": "从狄斯西区向新城切换"
+            "Node.Action.Succeeded": "从狄斯西区向新城·Ⅱ切换"
         }
     },
     "材料进入狄斯": {
@@ -305,6 +353,7 @@
         "action": {
             "type": "Click"
         },
+        "post_delay": 800,
         "next": [
             "材料确认主页",
             "材料返回主页",
@@ -336,6 +385,7 @@
                 ]
             }
         },
+        "post_delay": 800,
         "next": [
             "材料确认主页",
             "材料返回主页",
@@ -359,6 +409,7 @@
         "action": {
             "type": "Click"
         },
+        "post_delay": 1500,
         "next": [
             "材料确认主页",
             "材料返回主页",
@@ -383,7 +434,7 @@
         "action": {
             "type": "Click"
         },
-        "post_wait_freezes": 30,
+        "post_delay": 1000,
         "next": [
             "材料确认主页",
             "材料返回主页",

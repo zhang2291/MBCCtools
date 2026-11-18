@@ -95,6 +95,15 @@
       ]
     },
     {
+      "name": "问卷调查",
+      "entry": "问卷调查",
+      "doc": "手动勾选后执行：从主界面点击顶部问卷入口，通用自动同意并填写当前版本问卷（满意度/量表默认选「比较满意」4分，兼容单选/多选/必填框/质检题）直至提交并返回主页；无问卷时自动跳过。",
+      "default_check": false,
+      "resource": [
+        "官服"
+      ]
+    },
+    {
       "name": "退出游戏",
       "entry": "退出游戏",
       "default_check": false,
@@ -230,7 +239,7 @@
           }
         },
         {
-          "name": "刷取材料（苍蓝穹顶）",
+          "name": "刷取材料（恩慈余光）",
           "icon": "image/材料/材料.png",
           "pipeline_override": {
             "每日体力用途": {
@@ -347,11 +356,11 @@
           "name": "裂生冰晶锥",
           "icon": "image/材料/裂生冰晶锥.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*1$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*4$"
             }
           }
         },
@@ -359,11 +368,11 @@
           "name": "沉雾泪晶",
           "icon": "image/材料/沉雾泪晶.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*6$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*6$"
             }
           }
         },
@@ -371,11 +380,11 @@
           "name": "繁盛曲铜晶",
           "icon": "image/材料/繁盛曲铜晶.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*9$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*1$"
             }
           }
         },
@@ -383,11 +392,11 @@
           "name": "结霜毒砂晶",
           "icon": "image/材料/结霜毒砂晶.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*3$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*9\\s*[&＆]\\s*10$"
             }
           }
         },
@@ -395,11 +404,11 @@
           "name": "燃念赤晶",
           "icon": "image/材料/燃念赤晶.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*9$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*9\\s*[-－–—]\\s*8$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*8$"
             }
           }
         },
@@ -407,11 +416,11 @@
           "name": "衰变暮辉晶",
           "icon": "image/材料/衰变暮辉晶.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*1$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*4$"
+              "expected": "^S\\s*1\\s*[-－–—]\\s*5$"
             }
           }
         },
@@ -419,11 +428,11 @@
           "name": "异化暗凝胶",
           "icon": "image/材料/异化暗凝胶.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*8$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*11$"
             }
           }
         },
@@ -431,11 +440,11 @@
           "name": "异化诡影鞘翅",
           "icon": "image/材料/异化诡影鞘翅.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*9$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*9\\s*[-－–—]\\s*5$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*2$"
             }
           }
         },
@@ -443,11 +452,11 @@
           "name": "异化棘状角",
           "icon": "image/材料/异化棘状角.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*7$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*5$"
             }
           }
         },
@@ -455,11 +464,11 @@
           "name": "异化尖刺骨片",
           "icon": "image/材料/异化尖刺骨片.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*2$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*3$"
             }
           }
         },
@@ -467,11 +476,11 @@
           "name": "异化真红囊泡",
           "icon": "image/材料/异化真红囊泡.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*10$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*1$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*10\\s*[-－–—]\\s*5$"
+              "expected": "^S\\s*1\\s*[-－–—]\\s*9$"
             }
           }
         },
@@ -479,16 +488,16 @@
           "name": "异化拟怪腕足",
           "icon": "image/材料/异化拟怪腕足.png",
           "pipeline_override": {
-            "苍蓝穹顶章节选择": {
-              "expected": "^N\\s*9$"
+            "恩慈余光章节选择": {
+              "expected": "^S\\s*2$"
             },
             "目标材料关卡": {
-              "expected": "^N\\s*9\\s*[-－–—]\\s*2$"
+              "expected": "^S\\s*2\\s*[-－–—]\\s*7$"
             }
           }
         }
       ],
-      "description": "请确保苍蓝穹顶 N9/N10 普通难度已解锁扫荡",
+      "description": "请确保恩慈余光 S1/S2 常规模式已解锁扫荡",
       "type": "select"
     },
     "关卡未开放备选": {

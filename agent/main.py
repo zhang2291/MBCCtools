@@ -19,6 +19,7 @@ from custom import reco
 
 import gacha  # Registers the gacha-only Custom nodes.
 import inventory  # Registers read-only inventory scanning and export actions.
+import survey  # Registers universal in-game H5 survey auto-fill action.
 
 
 def main():

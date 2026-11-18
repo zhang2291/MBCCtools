@@ -1,0 +1,182 @@
+{
+    "问卷调查": {
+        "recognition": {
+            "type": "DirectHit"
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "next": [
+            "问卷_已在问卷页",
+            "问卷_点击入口",
+            "问卷_无入口跳过",
+            "[JumpBack]问卷_返回主页"
+        ],
+        "timeout": 5000
+    },
+    "问卷_已在问卷页": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    520,
+                    0,
+                    240,
+                    48
+                ],
+                "expected": "Survey"
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "next": [
+            "问卷_自动作答"
+        ]
+    },
+    "问卷_点击入口": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    375,
+                    15,
+                    95,
+                    70
+                ],
+                "template": "问卷入口.png",
+                "threshold": 0.62
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 2500,
+        "focus": {
+            "Node.Action.Succeeded": "发现问卷入口，进入问卷自动作答"
+        },
+        "next": [
+            "问卷_自动作答"
+        ]
+    },
+    "问卷_无入口跳过": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1018,
+                    422,
+                    34,
+                    40
+                ],
+                "expected": [
+                    "禁"
+                ]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "focus": {
+            "Node.Action.Succeeded": "主界面当前无问卷入口，已跳过"
+        }
+    },
+    "问卷_返回主页": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    11,
+                    6,
+                    320,
+                    79
+                ],
+                "template": "主菜单.png"
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "post_delay": 1500,
+        "max_hit": 3
+    },
+    "问卷_自动作答": {
+        "recognition": {
+            "type": "DirectHit"
+        },
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "SurveyAutoFill",
+                "custom_action_param": {
+                    "default_rating": 4,
+                    "fill_text": "无",
+                    "max_steps": 120
+                }
+            }
+        },
+        "focus": {
+            "Node.Action.Starting": "开始自动填写问卷（满意度默认选比较满意）",
+            "Node.Action.Succeeded": "问卷处理完成"
+        },
+        "next": [
+            "问卷_确认主页",
+            "问卷_关闭弹窗"
+        ],
+        "timeout": 5000
+    },
+    "问卷_关闭弹窗": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    520,
+                    0,
+                    240,
+                    48
+                ],
+                "expected": "Survey"
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1240,
+                    25,
+                    1,
+                    1
+                ]
+            }
+        },
+        "post_delay": 1200,
+        "max_hit": 2,
+        "next": [
+            "问卷_确认主页",
+            "问卷_关闭弹窗"
+        ],
+        "on_error": []
+    },
+    "问卷_确认主页": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1018,
+                    422,
+                    34,
+                    40
+                ],
+                "expected": [
+                    "禁"
+                ]
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "focus": {
+            "Node.Recognition.Succeeded": "问卷结束，已回到主页"
+        }
+    }
+}
