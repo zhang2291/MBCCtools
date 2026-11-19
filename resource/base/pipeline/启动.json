@@ -384,6 +384,7 @@
             }
         },
         "next": [
+            "[JumpBack]安装包检查中",
             "登录",
             "[JumpBack]关闭公告",
             "首页"
@@ -391,7 +392,7 @@
         "on_error": [
             "登录前异常处理"
         ],
-        "timeout": 60000
+        "timeout": 90000
     },
     "登录前异常处理": {
         "action": {
@@ -607,5 +608,17 @@
         "focus": {
             "Node.Action.Succeeded": "关闭四星皮肤弹窗"
         }
+    },
+    "安装包检查中": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": "安装包检查中"
+            }
+        },
+        "action": {
+            "type": "DoNothing"
+        },
+        "post_delay": 2000
     }
 }
