@@ -109,7 +109,7 @@ class Records:
 
     @staticmethod
     def time(row):
-        return re.sub(r'^(\d{4}-\d{2}-\d{2})(\d{2}:)', r'\1 \2', row['cells'][0])
+        return re.sub(r'^(\d{4}-\d{2}-\d{2})[.\s_T]?(\d{2}:)', r'\1 \2', row['cells'][0])
 
     def snapshot(self, category_id, pool=''):
         available = self.categories()

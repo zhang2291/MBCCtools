@@ -326,7 +326,10 @@ def _ocr_rows(context, image, roi, min_score, line_tol, badge_x=None):
     box_list = []
     for _, cells in rows:
         cells.sort(key=lambda c: c[0])
-        cells_list.append(tuple(c[1] for c in cells))
+        row_texts = [c[1] for c in cells]
+        if row_texts and re.match(r"^\d{4}-\d{2}-\d{2}[.\s_T]?\d{2}:\d{2}:\d{2}$", row_texts[0]):
+            row_texts[0] = re.sub(r"^(\d{4}-\d{2}-\d{2})[.\s_T]?(\d{2}:\d{2}:\d{2})$", r"\1 \2", row_texts[0])
+        cells_list.append(tuple(row_texts))
         boxes = [c[2] for c in cells]
         x0 = min(b[0] for b in boxes)
         y0 = min(b[1] for b in boxes)
@@ -794,7 +797,7 @@ class GachaRecordBeginRun(CustomAction):
 
 _SHEET_BAD_CHARS = re.compile(r"[\\/*?:\[\]]")
 # OCR 常把日期与时间之间那个空格吃掉（实测 10 行里 3 行），明细保留原样，导出层补回来
-_TIME_FIX = re.compile(r"^(\d{4}-\d{2}-\d{2})(\d{2}:)")
+_TIME_FIX = re.compile(r"^(\d{4}-\d{2}-\d{2})[.\s_T]?(\d{2}:)")
 
 
 def _record_time(rec):
