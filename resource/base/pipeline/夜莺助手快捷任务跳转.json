@@ -37,6 +37,41 @@
             "[JumpBack]识别免费礼包"
         ],
         "on_error": [
+            "收起助手后结束",
+            "结束任务"
+        ]
+    },
+    "收起助手后结束": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    1120,
+                    110,
+                    130,
+                    200
+                ],
+                "expected": [
+                    "前往"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click",
+            "param": {
+                "target": [
+                    1150,
+                    675,
+                    20,
+                    20
+                ]
+            }
+        },
+        "post_delay": 600,
+        "next": [
+            "结束任务"
+        ],
+        "on_error": [
             "结束任务"
         ]
     },

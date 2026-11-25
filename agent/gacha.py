@@ -264,6 +264,7 @@ class _RecordSession:
         # 页头追踪类型，由 GachaRecordPoolType 在采集前写入；没识别出来保持 None
         self.pool_type = None
         self.consumed_hist = {}
+        self.last_corrupted_count = 0
         self.status = "running"
         self.finish_reason = ""
         self.pages = 0
@@ -312,6 +313,16 @@ def _write_progress(session, state, page=None):
         temp = target.with_suffix(".tmp")
         temp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         os.replace(temp, target)
+    except Exception:
+        pass
+
+
+def _clear_progress(archive):
+    """开跑前清理上一轮遗留的 .progress.json，避免快速重跑+秒停时 UI 读到旧结果。"""
+    try:
+        target = (_data_root() / str(archive)).parent / ".progress.json"
+        if target.exists():
+            target.unlink()
     except Exception:
         pass
 
@@ -1039,6 +1050,7 @@ class GachaRecordPage(CustomRecognition):
         """对整页行执行合法性校验、精确匹配与跨页受约束内存模糊去重。
         返回 (fresh_indices, hit_known_count) 或附加 (repair_targets)。"""
         valid_items = []
+        corrupted_count = 0
         for index, (cells, key) in enumerate(zip(rows, keys)):
             if (
                 len(cells) < 3
@@ -1048,6 +1060,7 @@ class GachaRecordPage(CustomRecognition):
             ):
                 _log(f"GachaRecordPage ⚠️ 警告：第 {session.attempts} 页第 {index + 1} 行格式残缺或时间戳非法 (原文: {cells})，记录至异常行日志并跳过")
                 _log_corrupted_row(session, cells, key)
+                corrupted_count += 1
                 continue
             ts_digits = "".join(re.findall(r"\d+", str(cells[0]))[:6])
             valid_items.append({
@@ -1059,6 +1072,7 @@ class GachaRecordPage(CustomRecognition):
                 "name_norm": _normalize_name(cells[-1]),
             })
 
+        session.last_corrupted_count = corrupted_count
         if not valid_items:
             return ([], 0, []) if return_repair else ([], 0)
 
@@ -1122,8 +1136,6 @@ class GachaRecordPage(CustomRecognition):
                     canon_key = cand["key"]
                     session.run_counts[canon_key] = session.run_counts.get(canon_key, 0) + 1
                     keys[item["index"]] = canon_key
-                    if _needs_rarity_repair(cand.get("rarity")) and cand.get("file") is not None:
-                        repair_targets.append((item["index"], cand))
                     _log(f"GachaRecordPage 内存模糊去重命中：[{name_norm}] 归并至历史记录 [{cand['name']}] (key={canon_key})")
                 elif len(matching_cands) > 1:
                     _log_pending_review(session, item["cells"], "多候选冲突", [c[1]["name"] for c in matching_cands])
@@ -1195,7 +1207,8 @@ class GachaRecordPage(CustomRecognition):
         page_no = None
         hit_known_count = 0
         for attempt in range(2):
-            if not _ocr_find(context, image, gate_roi, [gate_text], min_score):
+            attempt_image = image
+            if not _ocr_find(context, attempt_image, gate_roi, [gate_text], min_score):
                 outcome = ("off_page", {})
                 rows = boxes = keys = rarities = None
                 if attempt == 0 and hasattr(ctrl, "post_screencap"):
@@ -1225,6 +1238,10 @@ class GachaRecordPage(CustomRecognition):
                     time.sleep(0.5)
                     ctrl.post_screencap().wait()
                     image = ctrl.cached_image
+                    if not _ocr_find(context, image, gate_roi, [gate_text], min_score):
+                        outcome = ("off_page", {})
+                        rows = boxes = keys = rarities = None
+                        break
                     t0 = time.perf_counter()
                     page_no = _read_page_number(context, image, page_roi, min_score)
                     t_page_no_cost += time.perf_counter() - t0
@@ -1262,6 +1279,16 @@ class GachaRecordPage(CustomRecognition):
                     page_no = back_page
                     _log(f"GachaRecordPage 已回退拉齐至第 {page_no} 页")
 
+            if image is not attempt_image and not _ocr_find(context, image, gate_roi, [gate_text], min_score):
+                outcome = ("off_page", {})
+                rows = boxes = keys = rarities = None
+                if attempt == 0 and hasattr(ctrl, "post_screencap"):
+                    time.sleep(0.5)
+                    ctrl.post_screencap().wait()
+                    image = ctrl.cached_image
+                    continue
+                break
+
             if page_no is not None and session.last_page is not None:
                 if page_no > session.last_page + 1:
                     _log(f"GachaRecordPage ⚠️ 警告：检测到页码非连续跳变（从第 {session.last_page} 页直接跳至第 {page_no} 页）")
@@ -1269,8 +1296,15 @@ class GachaRecordPage(CustomRecognition):
                     if page_no > session.last_page + 5:
                         page_no = session.last_page + 1
                 elif page_no < session.last_page:
-                    _log(f"GachaRecordPage ⚠️ 警告：检测到页码异常回退（从第 {session.last_page} 页退至第 {page_no} 页）")
-                    session.mark_partial(f"检测到页码异常回退（第 {session.last_page} 页 -> 第 {page_no} 页）")
+                    _log(f"GachaRecordPage ⚠️ 警告：检测到页码异常回退（从第 {session.last_page} 页退至第 {page_no} 页），跳过写入并终止")
+                    outcome = ("page_regress", {"page": page_no, "last_page": session.last_page})
+                    rows = boxes = keys = rarities = None
+                    if attempt == 0 and hasattr(ctrl, "post_screencap"):
+                        time.sleep(0.5)
+                        ctrl.post_screencap().wait()
+                        image = ctrl.cached_image
+                        continue
+                    break
 
             t0 = time.perf_counter()
             rows, boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
@@ -1282,11 +1316,16 @@ class GachaRecordPage(CustomRecognition):
                 _log(f"GachaRecordPage 检测到表格疑似缺失行 (仅 {len(rows)} 行)，消耗重试预算 (剩余 {session.extra_ocr_budget} 次) 重截重试")
                 time.sleep(0.3)
                 ctrl.post_screencap().wait()
-                image = ctrl.cached_image
+                retry_image = ctrl.cached_image
+                if not _ocr_find(context, retry_image, gate_roi, [gate_text], min_score):
+                    outcome = ("off_page", {})
+                    rows = boxes = keys = rarities = None
+                    break
                 t0 = time.perf_counter()
-                retry_rows, retry_boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
+                retry_rows, retry_boxes = _ocr_rows(context, retry_image, roi, min_score, line_tol, badge_x)
                 t_rows_cost += time.perf_counter() - t0
                 if len(retry_rows) > len(rows):
+                    image = retry_image
                     rows, boxes = retry_rows, retry_boxes
 
             keys = [_row_sig(cells) for cells in rows]
@@ -1315,6 +1354,8 @@ class GachaRecordPage(CustomRecognition):
                 else:
                     session.last_page = page_no
                     session.last_keys = keys
+                    if session.last_corrupted_count > 0:
+                        session.mark_partial(f"第 {page_no} 页有 {session.last_corrupted_count} 条残缺记录已跳过")
 
                     if not stop_on_known and repair_targets:
                         t0 = time.perf_counter()
@@ -1393,11 +1434,18 @@ class GachaRecordPage(CustomRecognition):
 
             done_target = next_done
             if reason == "empty":
-                session.mark_completed("空记录页采集完成")
+                if session.pages == 0:
+                    session.mark_completed("空记录页采集完成")
+                else:
+                    session.mark_partial("翻页后未识别到记录行（疑似 OCR 异常）")
             elif reason == "off_page":
                 session.mark_partial("脱离抽卡记录页")
             elif reason == "corrupted_page":
                 session.mark_partial("当前页记录识别不完整（OCR 异常）")
+            elif reason == "page_regress":
+                session.mark_partial(
+                    f"检测到页码异常回退（第 {detail.get('last_page')} 页 -> 第 {detail.get('page')} 页）"
+                )
             elif reason == "no_advance":
                 page_now = detail.get("page")
                 if page_now is not None and page_now <= 1:
@@ -1507,6 +1555,7 @@ class GachaRecordBeginRun(CustomAction):
         param = _parse_param(argv)
         archive = param.get("archive") or DEFAULT_ARCHIVE
         old = _sessions.pop(archive, None)
+        _clear_progress(archive)
         if old is not None:
             _log(f"GachaRecordBeginRun 丢弃残留会话（上轮新增 {old.new_count} 条）")
         return True

@@ -72,7 +72,11 @@ class MaterialRouteTest(unittest.TestCase):
             self.assertLess(route.index(f'[JumpBack]{node_name}'), home_idx)
             node = self.pipeline[node_name]
             self.assertLess(node['end'][1], node['begin'][1])
+        self.assertIn('[JumpBack]材料收起助手', route[:home_idx])
         self.assertEqual(self.pipeline['材料导航回主页']['max_hit'], 1)
+        assistant = json.loads((ROOT / 'resource/base/pipeline/夜莺助手快捷任务跳转.json').read_text(encoding='utf-8'))
+        self.assertEqual(assistant['夜莺助手快捷任务跳转']['on_error'], ['收起助手后结束', '结束任务'])
+        self.assertIn('收起助手后结束', assistant)
 
     def test_completion_and_shortage_require_home_confirmation(self):
         route = ['材料确认主页', '材料返回主页', '材料返回上级']
