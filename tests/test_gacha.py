@@ -269,6 +269,49 @@ class GachaTests(unittest.TestCase):
             fresh5, known5 = collector._fresh_row_indices(session, rows5, keys5)
             self.assertEqual(1, len(fresh5))
 
+    def test_stop_on_known_saves_fresh_rows_on_mixed_page(self):
+        new_row = ('2026-11-25 16:46:50', '明轨将追', '新增角色')
+        k1 = ('2026-09-16 21:07:05', '明轨将追', '艾米潘')
+        k2 = ('2026-09-16 21:07:05', '明轨将追', '雷比尼斯')
+        rows = [new_row, k1, k2]
+        boxes = [[440, 290, 640, 28], [440, 320, 640, 28], [440, 350, 640, 28]]
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            session.file_for(None).write_text(
+                '\n'.join([
+                    json.dumps(dict(index=1, key=agent._row_sig(k1), rarity='普', cells=k1), ensure_ascii=False),
+                    json.dumps(dict(index=2, key=agent._row_sig(k2), rarity='普', cells=k2), ensure_ascii=False),
+                ]) + '\n',
+                encoding='utf-8',
+            )
+            routed = []
+            context = SimpleNamespace(
+                override_next=lambda node, next_list: routed.append((node, list(next_list))) or True,
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别',
+                custom_recognition_param=json.dumps({'stop_on_known': True}),
+            )
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', return_value=None), \
+                    patch.object(agent, '_ocr_rows', return_value=(rows, boxes)), \
+                    patch.object(agent, '_rarity_by_row', return_value=['普']) as rarity:
+                res = agent.GachaRecordPage().analyze(context, argv)
+            self.assertIsNotNone(res)
+            rarity.assert_called_once()
+            self.assertEqual(1, session.new_count)
+            self.assertEqual(1, session.pages)
+            self.assertEqual(2, session.known_count)
+            self.assertEqual('completed', session.status)
+            self.assertEqual(('抽卡记录_单页识别', ['抽卡记录汇总']), routed[-1])
+            saved = [json.loads(line) for line in session.file_for(None).read_text(encoding='utf-8').splitlines()]
+            self.assertEqual(3, len(saved))
+            self.assertEqual(agent._row_sig(new_row), saved[-1]['key'])
+
 
 if __name__ == '__main__':
     unittest.main()

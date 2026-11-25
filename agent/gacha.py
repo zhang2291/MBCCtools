@@ -1231,11 +1231,6 @@ class GachaRecordPage(CustomRecognition):
                     _log(f"GachaRecordPage 第 {page_no} 页均为已知记录，跳过稀有度识别")
                     fresh = []
 
-                if stop_on_known and (hit_known_count >= 2 or (len(fresh) == 0 and hit_known_count >= 1)):
-                    outcome = ("known_stop", {})
-                    session.status = "completed"
-                    session.finish_reason = "命中已知历史记录（增量采集完成）"
-                    break
                 outcome = None
             if outcome is None:
                 break
@@ -1329,11 +1324,6 @@ class GachaRecordPage(CustomRecognition):
                                {"page": page_no, "rows": len(rows), "new_rows": len(fresh),
                                 "total": total, "archive": str(session.path), "status": session.status})
 
-        return self._route(context, argv, next_fresh, boxes[-1],
-                           {"page": page_no, "rows": len(rows), "new_rows": len(fresh),
-                            "total": total, "archive": str(session.path)})
-
-        # 每页读完都翻页继续。override 每轮都显式重置，防止上一页留下的路由残留。
         return self._route(context, argv, next_fresh, boxes[-1],
                            {"page": page_no, "rows": len(rows), "new_rows": len(fresh),
                             "total": total, "archive": str(session.path)})
