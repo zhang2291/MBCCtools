@@ -29,7 +29,7 @@
                 "custom_recognition": "GachaRecordPoolType",
                 "custom_recognition_param": {
                     "archive": "record/抽卡记录",
-                    "min_score": 0.5
+                    "min_score": 0.35
                 },
                 "roi": [414, 218, 425, 60]
             }
@@ -53,10 +53,11 @@
                 "custom_recognition": "GachaRecordFirstPage",
                 "custom_recognition_param": {
                     "archive": "record/抽卡记录",
-                    "min_score": 0.5,
+                    "min_score": 0.35,
                     "line_tol": 14,
                     "badge_x": [856, 908],
-                    "gate_roi": [414, 218, 425, 60]
+                    "gate_roi": [414, 218, 425, 60],
+                    "page_roi": [735, 625, 65, 36]
                 },
                 "roi": [440, 275, 640, 350]
             }
@@ -85,14 +86,15 @@
                 "custom_recognition": "GachaRecordPage",
                 "custom_recognition_param": {
                     "archive": "record/抽卡记录",
-                    "min_score": 0.5,
+                    "min_score": 0.35,
                     "line_tol": 14,
                     "badge_x": [856, 908],
                     "rarity_dir": "抽卡",
                     "rarity_tiers": ["狂", "危", "普"],
                     "gate_roi": [414, 218, 425, 60],
                     "page_roi": [735, 625, 65, 36],
-                    "max_pages": 200
+                    "max_pages": 200,
+                    "stop_on_known": true
                 },
                 "roi": [440, 275, 640, 350]
             }
@@ -100,12 +102,16 @@
         "action": {
             "type": "DoNothing"
         },
+        "pre_delay": 0,
+        "post_delay": 0,
         "timeout": 3000,
         "on_error": [
             "抽卡记录汇总"
         ],
         "next": [
-            "抽卡记录翻页"
+            "抽卡记录翻页",
+            "抽卡记录末页",
+            "抽卡记录汇总"
         ]
     },
     "抽卡记录翻页": {
@@ -118,7 +124,8 @@
         "action": {
             "type": "Click"
         },
-        "post_delay": 500,
+        "pre_delay": 0,
+        "post_delay": 300,
         "timeout": 8000,
         "on_error": [
             "抽卡记录汇总"

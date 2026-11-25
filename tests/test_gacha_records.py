@@ -52,7 +52,7 @@ class RecordsTest(unittest.TestCase):
         self.write('default-0',[('甲','普','Z'),('乙','狂','A'),('丙','普','Z')])
         data=self.store.snapshot('default-0')
         self.assertEqual(['Z','A'],data['pools'])
-        self.assertEqual('无上一条狂记录', data['hits'][0]['Note'])
+        self.assertEqual('首狂', data['hits'][0]['Note'])
 
     def test_delete_backs_up_records_and_survives_refresh(self):
         self.write('default-0',[('甲','狂','A')])
@@ -199,6 +199,135 @@ class RecordsTest(unittest.TestCase):
         destination=module.Records(Path(self.temp.name)/'restored')
         self.assertEqual(1,destination.import_excel('default-0',export)['count'])
         self.assertEqual('乙',destination.read('default-0')[0]['cells'][-1])
+
+    def test_corrupted_row_skipped_without_raising(self):
+        path = self.store.archive('default-0')
+        path.mkdir(parents=True, exist_ok=True)
+        # Normal row
+        normal = dict(index=1, cells=['2026-10-15 10:00:01', 'A', '甲'], key='k1', rarity='狂', type='活动')
+        # Corrupted rows (< 3 cells, non-list, etc.)
+        corrupted1 = dict(index=2, cells=['2026-10-15 10:00:02', 'A'], key='k2', rarity='普', type='活动')
+        corrupted2 = dict(index=3, cells='bad', key='k3', rarity='普', type='活动')
+        (path / '活动.jsonl').write_text(
+            json.dumps(normal, ensure_ascii=False) + '\n' +
+            json.dumps(corrupted1, ensure_ascii=False) + '\n' +
+            json.dumps(corrupted2, ensure_ascii=False) + '\n',
+            encoding='utf-8'
+        )
+        # Reading must not raise ValueError; it should skip corrupted lines
+        rows = self.store.read('default-0')
+        self.assertEqual(1, len(rows))
+        self.assertEqual('甲', rows[0]['cells'][-1])
+
+    def test_snapshot_pity_and_pullcount_exposed(self):
+        self.write('default-0', [('甲', '普', 'A'), ('乙', '狂', 'A'), ('丙', '普', 'A')])
+        data = self.store.snapshot('default-0')
+        self.assertEqual(1, data['current_pity'])
+        self.assertEqual(1, len(data['hits']))
+        self.assertIn('PullCount', data['hits'][0])
+        self.assertIsNone(data['hits'][0]['PullCount'])  # first gold has unknown prior pulls
+        self.assertIn('Id', data['summaries'][0])
+        self.assertEqual('default-0', data['summaries'][0]['Id'])
+
+    def test_up_win_rate_classification_and_skips_standard_or_unmapped(self):
+        banner_dir = Path(self.temp.name) / 'resource/base/gacha'
+        banner_dir.mkdir(parents=True, exist_ok=True)
+        (banner_dir / 'up_banners.json').write_text(json.dumps({
+            'version': 1,
+            'standard_pools': ['混沌都市'],
+            'banners': {'诸道无我': ['承霄']},
+        }, ensure_ascii=False), encoding='utf-8')
+        archive = self.store.archive('default-0')
+        archive.mkdir(parents=True, exist_ok=True)
+        rows = [
+            dict(index=1, key='k1', rarity='狂', type='活动', cells=['2026-10-15 10:00:01', '诸道无我', '承霄']),
+            dict(index=2, key='k2', rarity='狂', type='活动', cells=['2026-10-15 10:00:02', '诸道无我', '诺克斯']),
+            dict(index=3, key='k3', rarity='狂', type='活动', cells=['2026-10-15 10:00:03', '未知新池', '某角色']),
+            dict(index=4, key='k4', rarity='狂', type='常驻', cells=['2026-10-15 10:00:04', '混沌都市', '卓娅']),
+        ]
+        (archive / '活动.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in rows), encoding='utf-8')
+        data = self.store.snapshot('default-0')
+        self.assertEqual(1, data['up_wins'])
+        self.assertEqual(1, data['up_losses'])
+        self.assertEqual('50.0%', data['up_rate'])
+        statuses = {h['Name']: h['UpStatus'] for h in data['hits']}
+        self.assertEqual('UP', statuses['承霄'])
+        self.assertEqual('歪', statuses['诺克斯'])
+        self.assertEqual('', statuses['某角色'])
+        self.assertEqual('', statuses['卓娅'])
+
+    def test_guaranteed_up_after_loss_is_excluded_from_fifty_fifty_rate(self):
+        banner_dir = Path(self.temp.name) / 'resource/base/gacha'
+        banner_dir.mkdir(parents=True, exist_ok=True)
+        (banner_dir / 'up_banners.json').write_text(json.dumps({
+            'version': 1,
+            'standard_pools': [],
+            'banners': {'诸道无我': ['承霄']},
+        }, ensure_ascii=False), encoding='utf-8')
+        archive = self.store.archive('default-0')
+        archive.mkdir(parents=True, exist_ok=True)
+        rows = [
+            dict(index=1, key='g1', rarity='狂', type='活动', cells=['2026-10-15 10:00:01', '诸道无我', '诺克斯']),
+            dict(index=2, key='g2', rarity='狂', type='活动', cells=['2026-10-15 10:00:02', '诸道无我', '承霄']),
+            dict(index=3, key='g3', rarity='狂', type='活动', cells=['2026-10-15 10:00:03', '诸道无我', '卓娅']),
+            dict(index=4, key='g4', rarity='狂', type='活动', cells=['2026-10-15 10:00:04', '诸道无我', '承霄']),
+        ]
+        (archive / '活动.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in rows), encoding='utf-8')
+        data = self.store.snapshot('default-0')
+        self.assertEqual(0, data['up_wins'])
+        self.assertEqual(2, data['up_losses'])
+        self.assertEqual(2, data['up_guaranteed'])
+        self.assertEqual('0.0%', data['up_rate'])
+        # Ordered newest-first
+        self.assertEqual(['大保底', '歪', '大保底', '歪'], [h['UpStatus'] for h in data['hits']])
+
+        rows2 = rows + [
+            dict(index=5, key='g5', rarity='狂', type='活动', cells=['2026-10-15 10:00:05', '诸道无我', '承霄']),
+            dict(index=6, key='g6', rarity='狂', type='活动', cells=['2026-10-15 10:00:06', '诸道无我', '承霄']),
+        ]
+        (archive / '活动.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in rows2), encoding='utf-8')
+        data2 = self.store.snapshot('default-0')
+        self.assertEqual(2, data2['up_wins'])
+        self.assertEqual(2, data2['up_losses'])
+        self.assertEqual(2, data2['up_guaranteed'])
+        self.assertEqual('50.0%', data2['up_rate'])
+
+    def test_expected_up_excludes_standard_and_untracked_pools(self):
+        banner_dir = Path(self.temp.name) / 'resource/base/gacha'
+        banner_dir.mkdir(parents=True, exist_ok=True)
+        (banner_dir / 'up_banners.json').write_text(json.dumps({
+            'version': 1,
+            'standard_pools': ['混沌都市'],
+            'banners': {'诸道无我': ['承霄']},
+        }, ensure_ascii=False), encoding='utf-8')
+
+        # Keep total rows under 59 so self.write's HH:MM:{index:02d} stays valid SS (01..59).
+        # Tracked pool: 1st gold 诺克斯 (OFF, excluded from interval avg) -> 4-pull 承霄 (大保底) -> 2-pull 承霄 (UP) -> 3-pull 承霄 (UP)
+        # Known tracked intervals: [4, 2, 3] -> avg = 3.0; wins=2, losses=1 -> mult = 4/3 -> expected_up = 4.0
+        rows_a = [('垫', '普', '诸道无我'), ('诺克斯', '狂', '诸道无我')]
+        rows_a += [('垫', '普', '诸道无我')] * 3 + [('承霄', '狂', '诸道无我')]
+        rows_a += [('垫', '普', '诸道无我')] * 1 + [('承霄', '狂', '诸道无我')]
+        rows_a += [('垫', '普', '诸道无我')] * 2 + [('承霄', '狂', '诸道无我')]
+        # Unknown pool in same category (must be excluded from expected_up)
+        rows_a += [('垫', '普', '未知池')] * 9 + [('卓娅', '狂', '未知池')]
+        self.write('default-0', rows_a)
+
+        # Standard pool with very high intervals (must be completely excluded)
+        rows_std = [('卓娅', '狂', '混沌都市')] + [('垫', '普', '混沌都市')] * 29 + [('席宁', '狂', '混沌都市')]
+        self.write('default-3', rows_std)
+
+        all_snap = self.store.snapshot('all')
+        self.assertEqual(2, all_snap['up_wins'])
+        self.assertEqual(1, all_snap['up_losses'])
+        self.assertEqual(1, all_snap['up_guaranteed'])
+        self.assertAlmostEqual(4.0, all_snap['expected_up'], places=4)
+        self.assertEqual('4.0 抽', all_snap['expected_up_text'])
+        self.assertEqual(3, all_snap['tracked_gold_count'])
+
+        std_snap = self.store.snapshot('default-3')
+        self.assertIsNone(std_snap['expected_up'])
+        self.assertEqual('—', std_snap['expected_up_text'])
+        self.assertEqual('未判定池不纳入计算', std_snap['expected_up_sub'])
 
 
 if __name__=='__main__':unittest.main()

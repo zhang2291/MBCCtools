@@ -16,6 +16,7 @@ import functools
 from contextlib import contextmanager
 import re
 import sys
+import threading
 import time
 
 try:
@@ -71,6 +72,155 @@ def _as_point(value, default):
     return default
 
 
+# 禁闭者静态稀有度映射字典（涵盖狂/危/普已知角色，用于混合校验与加速）
+# 纯净字典，只收录标准规范角色全名
+KNOWN_SINNERS = {
+    # 狂级 (SSR)
+    "诺克斯": "狂", "哈梅尔": "狂", "卓娅": "狂", "白逸": "狂", "兰利": "狂", "迪蒙": "狂",
+    "伊琳娜": "狂", "夏音": "狂", "观星者": "狂", "娜恰": "狂", "恩菲尔": "狂", "黛伦": "狂",
+    "嗷呜": "狂", "爱缇": "狂", "渡鸦": "狂", "卡门奈特": "狂", "罗睺": "狂", "可可莉克": "狂",
+    "瑟琳": "狂", "曼提斯": "狂", "雷温": "狂", "珀尔夫人": "狂", "曜": "狂", "杜若": "狂",
+    "毕安卡": "狂", "000": "狂", "席宁": "狂", "克莱门汀": "狂", "赛托": "狂", "蜜莉": "狂",
+    "承霄": "狂", "荒噬·伊琳娜": "狂", "达芙蒂尔": "狂", "法露儿": "狂", "凯因": "狂", "莎缇拉": "狂",
+    "L.L.": "狂",
+    # 危级 (SR)
+    "麦昆": "危", "堇": "危", "温蒂": "危", "卡瓦卡瓦": "危", "李维": "危", "辰砂": "危",
+    "卡斯洛": "危", "奥利弗": "危", "赫罗": "危", "琳": "危", "九十九": "危", "莱塔": "危",
+    "切尔西伯爵": "危", "莓丝": "危", "优利卡": "危", "狼獾": "危", "拉弥亚": "危", "维多利亚": "危",
+    "诺玛": "危", "雅可": "危", "蓟": "危", "多芙": "危", "伊格尼": "危", "简": "危",
+    "妮诺": "危", "瑞思": "危", "希格林德": "危", "安": "危", "露薇娅·蕾": "危", "艾可": "危",
+    "泽斐尔": "危", "阿依果": "危", "黎莎洛": "危", "多莉": "危", "福克斯先生": "危", "克里斯蒂娜": "危",
+    "派因": "危", "烟烟": "危", "艾瑞尔": "危", "戈蓝": "危", "卡米利安": "危", "艾恩": "危",
+    "米拉": "危", "泰特拉": "危", "卡西娅": "危", "梅露辛": "危", "舒鲁玛": "危",
+    "啵啡": "危", "无患子": "危", "萨妮": "危", "嘟嘟": "危", "依唯": "危", "海莉": "危",
+    "尤尼": "危", "肖恩": "危", "卡兹安": "危", "帕加茜": "危", "卢米尼塔": "危", "玛蒂尔达": "危",
+    "露莉艾卡": "危", "普希拉": "危",
+    # 普级 (R)
+    "琼": "普", "蔻蔻": "普", "德莫莉": "普", "芙洛拉": "普", "玛奇朵": "普", "澈": "普",
+    "昙": "普", "艾米潘": "普", "丽莎": "普", "开尔文": "普", "胡椒": "普",
+    "海拉": "普", "佩姬": "普", "雷比尼斯": "普",
+}
+
+# 常见 OCR 错别字/漏字别名纠错字典
+OCR_NAME_ALIASES = {
+    # 简繁及形近字纠错
+    "卡茲安": "卡兹安",
+    "县": "昙",
+    "克斯蒂娜": "克里斯蒂娜",
+    "雷比妮斯": "雷比尼斯",
+    "诺克断": "诺克斯",
+    "澈澈": "澈",
+    "澈县": "澈",
+    # 常见 OCR 繁体或异体字规范
+    "溫蒂": "温蒂",
+    "蘭利": "兰利",
+    "切爾西伯爵": "切尔西伯爵",
+    "福克斯先生": "福克斯先生",
+    "露薇婭·蕾": "露薇娅·蕾",
+    "愛緹": "爱缇",
+    "觀星者": "观星者",
+    "麥昆": "麦昆",
+    "萊塔": "莱塔",
+    "狼獾": "狼獾",
+    "瑪奇朵": "玛奇朵",
+}
+
+
+def _normalize_name(name):
+    if not name:
+        return ""
+    stripped = name.strip()
+    stripped = re.sub(r"^[·\s\-_]+|[·\s\-_]+$", "", stripped)
+    return OCR_NAME_ALIASES.get(stripped, stripped)
+
+
+def _normalize_pool(pool):
+    """规范化卡池名称中的已知分隔符（.、•、· 统一为 ·）、首尾及内部多余空白与全角/半角差异。"""
+    if not pool:
+        return ""
+    text = str(pool).strip()
+    text = re.sub(r"[\s\.\•\u2022\u25cf\u00b7]+", "·", text)
+    return text.strip("· \t\r\n")
+
+
+def _levenshtein(s1, s2):
+    """计算两个字符串的 Levenshtein 编辑距离。"""
+    if s1 == s2:
+        return 0
+    if len(s1) < len(s2):
+        s1, s2 = s2, s1
+    if not s2:
+        return len(s1)
+    prev = list(range(len(s2) + 1))
+    for c1 in s1:
+        curr = [prev[0] + 1]
+        for j, c2 in enumerate(s2):
+            cost = 0 if c1 == c2 else 1
+            curr.append(min(curr[-1] + 1, prev[j + 1] + 1, prev[j] + cost))
+        prev = curr
+    return prev[-1]
+
+
+def _match_fuzzy_candidate(incoming_name, incoming_rarity, cand_name, cand_rarity):
+    """角色名三级模糊规则（仅限同时间戳 + 已匹配卡池范围内）：
+    1 字角色：仅精确匹配 + 已验证极小别名表，严禁模糊合并（防止 澈 ↔ 琼 误并）；
+    2 字角色：编辑距离 <= 1 时，必须强制视觉稀有度一致（防止 海拉[普] ↔ 海莉[危] 误并）；
+    3 字及以上角色：同秒同池条件下允许编辑距离 <= 1（覆盖 卡茲安 → 卡兹安 等场景）。
+    """
+    n1 = _normalize_name(incoming_name)
+    n2 = _normalize_name(cand_name)
+    if n1 == n2:
+        return True
+    dist = _levenshtein(n1, n2)
+    if len(n1) == 1 or len(n2) == 1:
+        return False
+    if len(n1) == 2 and len(n2) == 2:
+        if dist <= 1:
+            r1 = incoming_rarity or KNOWN_SINNERS.get(n1)
+            r2 = cand_rarity or KNOWN_SINNERS.get(n2)
+            if r1 and r2 and r1 == r2:
+                return True
+        return False
+    return dist <= 1
+
+
+def _log_pending_review(session, raw_cells, reason, candidates=None):
+    """待复核文件隔离：多候选冲突或无法归并的异常行写入 pending_review.log，
+    按原始签名去重，禁止以 .jsonl 结尾存放在归档目录内，避免被 glob('*.jsonl') 误读。"""
+    try:
+        log_file = session.path / "pending_review.log"
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sig = re.sub(r"\s+", "", "".join(str(c) for c in raw_cells))
+        cand_str = f" | 候选: {candidates}" if candidates else ""
+        entry = f"[{ts}] [{reason}] cells={list(raw_cells)} | sig={sig}{cand_str}\n"
+        # 简单防重复记录
+        if log_file.exists():
+            existing = log_file.read_text(encoding="utf-8")
+            if sig in existing:
+                return
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(entry)
+    except Exception as e:
+        _log(f"写入待复核日志失败: {e}")
+
+
+def _split_merged_names(text):
+    """若 OCR 将垂直相邻的两行角色名粘连为单个文本框（例如 '琳琼'、'昙琼'、'澈县'、'澈澈'），
+    尝试将其拆分为两个标准角色名并返回 (name1, name2)，否则返回 None。"""
+    text = (text or "").strip()
+    if not text or len(text) < 2:
+        return None
+    norm = _normalize_name(text)
+    if norm in KNOWN_SINNERS:
+        return None
+    for i in range(1, len(text)):
+        p1 = _normalize_name(text[:i])
+        p2 = _normalize_name(text[i:])
+        if p1 in KNOWN_SINNERS and p2 in KNOWN_SINNERS:
+            return p1, p2
+    return None
+
+
 def _rect_of(value):
     """识别结果里的 box 在不同绑定版本可能是 Rect 对象或 [x,y,w,h] 列表，统一成列表"""
     if value is None:
@@ -97,10 +247,11 @@ class _RecordSession:
     这样十连里同秒重复的同名条目（实测存在）不会被误判成已采过。
     """
 
-    def __init__(self, path, ts, store_counts):
+    def __init__(self, path, ts, store_counts, by_timestamp=None):
         self.path = path
         self.ts = ts
         self.store_counts = store_counts
+        self.by_timestamp = by_timestamp or {}
         self.run_counts = {}
         self.last_page = None
         self.last_keys = None
@@ -108,8 +259,15 @@ class _RecordSession:
         self.stall_retries = 0
         self.attempts = 0
         self.new_count = 0
+        self.extra_ocr_budget = 2
+        self.cross_page_buffer = []
         # 页头追踪类型，由 GachaRecordPoolType 在采集前写入；没识别出来保持 None
         self.pool_type = None
+        self.status = "running"
+        self.finish_reason = ""
+        self.pages = 0
+        self.known_count = 0
+        self.started = time.time()
 
     def file_for(self, pool_type):
         """当前类型对应的累计档案；类型没识别出来时落 未判.jsonl"""
@@ -117,6 +275,32 @@ class _RecordSession:
 
 
 _sessions = {}
+
+
+def _write_progress(session, state, page=None):
+    """给 PC / 手机界面看的实时进度：<档案目录的上一级>/.progress.json，原子替换。
+    state: running / finishing / done。写失败不影响采集。"""
+    try:
+        target = session.path.parent / ".progress.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "category": session.path.name,
+            "state": state,
+            "page": page if page is not None else session.last_page,
+            "pages": session.pages,
+            "new": session.new_count,
+            "known": session.known_count,
+            "pool_type": session.pool_type,
+            "status": session.status,
+            "reason": session.finish_reason,
+            "elapsed": round(time.time() - session.started, 1),
+            "updated": time.time(),
+        }
+        temp = target.with_suffix(".tmp")
+        temp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        os.replace(temp, target)
+    except Exception:
+        pass
 
 
 def _project_root():
@@ -128,20 +312,59 @@ def _data_root():
     return pathlib.Path(os.environ.get("MBCC_DATA_DIR", str(_project_root() / "data")))
 
 
+_THREAD_LOCK = threading.RLock()
+
+
 @contextmanager
 def _archive_lock():
     root = _data_root()
     root.mkdir(parents=True, exist_ok=True)
-    with open(root / ".gacha.lock", "a+b") as lock:
-        if os.name != "nt":
-            import fcntl
-            # POSIX record locks interoperate with Android FileChannel locks.
-            fcntl.lockf(lock, fcntl.LOCK_EX)
-        try:
-            yield
-        finally:
-            if os.name != "nt":
-                fcntl.lockf(lock, fcntl.LOCK_UN)
+    with _THREAD_LOCK:
+        lock_file = root / ".gacha.lock"
+        with open(lock_file, "a+b") as lock:
+            locked = False
+            if os.name == "nt":
+                import msvcrt
+                for _ in range(10):
+                    try:
+                        lock.seek(0)
+                        msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+                        locked = True
+                        break
+                    except Exception:
+                        time.sleep(0.02)
+                if not locked:
+                    try:
+                        lock.seek(0)
+                        msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+                        locked = True
+                    except Exception as e:
+                        _log(f"⚠ 获取文件锁失败: {e}")
+            else:
+                try:
+                    import fcntl
+                    # POSIX record locks interoperate with Android FileChannel locks.
+                    fcntl.lockf(lock, fcntl.LOCK_EX)
+                    locked = True
+                except Exception as e:
+                    _log(f"⚠ 获取文件锁失败: {e}")
+            try:
+                yield
+            finally:
+                if locked:
+                    if os.name == "nt":
+                        import msvcrt
+                        try:
+                            lock.seek(0)
+                            msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+                        except Exception:
+                            pass
+                    else:
+                        try:
+                            import fcntl
+                            fcntl.lockf(lock, fcntl.LOCK_UN)
+                        except Exception:
+                            pass
 
 
 def _locked(method):
@@ -153,21 +376,43 @@ def _locked(method):
 
 
 def _load_store(archive_dir):
-    """读档案目录下所有 <类型>.jsonl，返回全局 key->出现次数 与总条数。
+    """读档案目录下所有 <类型>.jsonl，返回全局 canonical_key->出现次数、总条数与时间戳索引。
 
-    身份键含时间+卡池+名称，跨类型不可能撞，全局一份去重计数即可。"""
+    身份键含时间+卡池+名称，跨类型不可能撞，全局一份去重计数即可。
+    特别注意：历史记录文件中可能存在旧版点号时间戳或未归一化错字，统一用 _row_sig 重新推导标准 Key，
+    保证无论历史档案何时生成，去重计数键恒定一致。
+    同时构建 by_timestamp[ts_norm] -> list[dict(pool, name, rarity, key)] 供受约束内存模糊去重。"""
     counts = {}
+    by_timestamp = {}
     total = 0
-    for fp in sorted(archive_dir.glob("*.jsonl")):
-        with open(fp, encoding="utf-8") as f:
-            for line in f:
-                try:
-                    key = json.loads(line)["key"]
-                except (json.JSONDecodeError, KeyError, TypeError):
-                    continue
-                counts[key] = counts.get(key, 0) + 1
-                total += 1
-    return counts, total
+    with _archive_lock():
+        for fp in sorted(archive_dir.glob("*.jsonl")):
+            with open(fp, encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        record = json.loads(line)
+                    except (json.JSONDecodeError, KeyError, TypeError):
+                        continue
+                    cells = record.get("cells", [])
+                    key = _row_sig(cells) if cells else record.get("key")
+                    if key:
+                        counts[key] = counts.get(key, 0) + 1
+                    if isinstance(cells, list) and len(cells) >= 3:
+                        ts_digits = "".join(re.findall(r"\d+", str(cells[0]))[:6])
+                        if ts_digits:
+                            pool_norm = _normalize_pool(cells[1])
+                            name_norm = _normalize_name(cells[-1])
+                            rarity = record.get("rarity")
+                            if ts_digits not in by_timestamp:
+                                by_timestamp[ts_digits] = []
+                            by_timestamp[ts_digits].append({
+                                "pool": pool_norm,
+                                "name": name_norm,
+                                "rarity": rarity,
+                                "key": key,
+                            })
+                    total += 1
+    return counts, total, by_timestamp
 
 
 def _get_session(archive):
@@ -178,8 +423,8 @@ def _get_session(archive):
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     root = _data_root() / archive
     root.mkdir(parents=True, exist_ok=True)
-    store_counts, total = _load_store(root)
-    session = _RecordSession(root, ts, store_counts)
+    store_counts, total, by_timestamp = _load_store(root)
+    session = _RecordSession(root, ts, store_counts, by_timestamp)
     _sessions[archive] = session
     _log(f"抽卡记录会话开始 -> {root}（已有 {total} 条）")
     return session
@@ -198,15 +443,15 @@ def _read_page_number(context, image, page_roi, min_score):
     if not crop.size:
         return None
     try:
-        from PIL import Image as _PILImage
-        pil_im = _PILImage.fromarray(crop[:, :, ::-1] if crop.ndim == 3 and crop.shape[2] == 3 else crop)
-        enlarged = pil_im.resize((w * 4, h * 4), _PILImage.BICUBIC)
-        crop = np.array(enlarged)[:, :, ::-1] if crop.ndim == 3 and crop.shape[2] == 3 else np.array(enlarged)
-    except Exception:
         if cv2 is not None:
             crop = cv2.resize(crop, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
         else:
-            crop = np.repeat(np.repeat(crop, 4, axis=0), 4, axis=1)
+            from PIL import Image as _PILImage
+            pil_im = _PILImage.fromarray(crop[:, :, ::-1] if crop.ndim == 3 and crop.shape[2] == 3 else crop)
+            enlarged = pil_im.resize((w * 4, h * 4), _PILImage.BICUBIC)
+            crop = np.array(enlarged)[:, :, ::-1] if crop.ndim == 3 and crop.shape[2] == 3 else np.array(enlarged)
+    except Exception:
+        crop = np.repeat(np.repeat(crop, 4, axis=0), 4, axis=1)
     detail = context.run_recognition_direct(
         JRecognitionType.OCR,
         JOCR(roi=[0, 0, crop.shape[1], crop.shape[0]]),
@@ -217,7 +462,9 @@ def _read_page_number(context, image, page_roi, min_score):
     for result in results:
         text = (getattr(result, "text", "") or "").strip()
         score = float(getattr(result, "score", 0.0))
-        digits = re.findall(r"\d+", text)
+        # 兼容 PaddleOCR 偶发将单独数字 '1' 误识别为 'I', 'l', '|'
+        text_norm = re.sub(r"[Il|]", "1", text)
+        digits = re.findall(r"\d+", text_norm)
         if not digits or score < min_score:
             continue
         val = int(digits[0])
@@ -250,18 +497,46 @@ def _probe_back(context, page_roi, min_score, back_point, page_no):
     return ("ok" if after != page_no else "stall"), after
 
 
-def _rarity_by_row(context, image, row_boxes, rarity_dir, tiers, floor):
-    """每档跑一次整目录 TemplateMatch，逐行取最高分的档。
+def _rarity_by_row(context, image, row_boxes, rarity_dir, tiers, floor, cell_names=None, badge_roi=None):
+    """优先根据角色名查静态稀有度表确定（0ms 开销），仅未命中行使用 JTemplateMatch 识别。
+    如果整页角色全部命中静态字典，直接跳过 JTemplateMatch，实现单页 0ms 稀有度匹配。"""
+    n_rows = len(row_boxes)
+    rarities = [None] * n_rows
+    unresolved_rows = []
 
-    单张模板不行：同档徽章的花框逐角色不同，自己匹配自己 0.999、同档另一张只有 0.5~0.6，
-    卡阈值必然漏档。所以 image/抽卡/<档>/ 下放多张样例，比的是 argmax 而不是阈值。
-    留一法回测 20/20（正确档 >=0.74，错误档全 0）。出新档就往目录里补图，不用改代码。
-    """
-    best = [{} for _ in row_boxes]
+    # 第一阶段：优先查静态字典（含常见 OCR 别名纠错）
+    if cell_names:
+        for idx in range(min(n_rows, len(cell_names))):
+            norm_name = _normalize_name(cell_names[idx])
+            if norm_name in KNOWN_SINNERS:
+                rarities[idx] = KNOWN_SINNERS[norm_name]
+            else:
+                unresolved_rows.append(idx)
+        if len(cell_names) < n_rows:
+            unresolved_rows.extend(range(len(cell_names), n_rows))
+    else:
+        unresolved_rows = list(range(n_rows))
+
+    # 如果整页所有行均已通过静态表命中稀有度，或者没有提供 tiers，直接 0ms 返回！
+    if not unresolved_rows or not tiers:
+        return rarities
+
+    # 第二阶段：仅对未命中角色（新角色或 OCR 错字）执行 TemplateMatch
+    if badge_roi:
+        effective_roi = badge_roi
+    else:
+        unresolved_y = [row_boxes[i][1] for i in unresolved_rows]
+        unresolved_h = [row_boxes[i][3] for i in unresolved_rows]
+        min_y = max(0, min(unresolved_y) - 6)
+        max_y = max(unresolved_y[i] + unresolved_h[i] for i in range(len(unresolved_rows))) + 6
+        effective_roi = [850, min_y, 65, max(1, max_y - min_y)]
+
+    best = {row: {} for row in unresolved_rows}
     for tier in tiers:
+        match_param = JTemplateMatch(template=[f"{rarity_dir}/{tier}"], roi=effective_roi, threshold=[0.3])
         detail = context.run_recognition_direct(
             JRecognitionType.TemplateMatch,
-            JTemplateMatch(template=[f"{rarity_dir}/{tier}"], threshold=[0.3]),
+            match_param,
             image,
         )
         for result in (getattr(detail, "all_results", None) or []):
@@ -270,21 +545,25 @@ def _rarity_by_row(context, image, row_boxes, rarity_dir, tiers, floor):
                 continue
             cy = box[1] + box[3] / 2.0
             score = float(getattr(result, "score", 0.0))
-            for row, (x, y, w, h) in enumerate(row_boxes):
-                # 徽章比文字高，纵向占 [行中心, 行中心+27]，所以按行框上下各放 4px 去接它的中心
-                if y - 4 <= cy <= y + h + 4:
+            for row in unresolved_rows:
+                rx, ry, rw, rh = row_boxes[row]
+                if ry - 4 <= cy <= ry + rh + 4:
                     if score > best[row].get(tier, 0.0):
                         best[row][tier] = score
                     break
 
-    rarities = []
-    for scores in best:
+    for row in unresolved_rows:
+        scores = best[row]
         if not scores:
-            rarities.append(None)
+            rarities[row] = None
             continue
         tier = max(scores, key=scores.get)
         top = scores[tier]
-        rarities.append(tier if top >= floor else f"未知:{tier}:{top:.2f}")
+        image_tier = tier if top >= floor else f"未知:{tier}:{top:.2f}"
+        rarities[row] = image_tier
+        name_str = cell_names[row] if cell_names and row < len(cell_names) else f"第{row+1}行"
+        _log(f"GachaRecordPage 模板匹配兜底：角色「{name_str}」识别为【{image_tier}】(分值={top:.2f})")
+
     return rarities
 
 
@@ -292,13 +571,26 @@ def _ocr_rows(context, image, roi, min_score, line_tol, badge_x=None):
     """整页 OCR 后按 y 聚成行，返回 (行文本, 行外接框) 两组等长列表。
 
     行内按 x 排序，所以一行的 cells 就是"时间 / 卡池 / 角色名"这类列的原始顺序，
-    不做语义解析。给了 badge_x（徽章列的横范围）就把落在该列里的 OCR 碎片剔掉，
-    免得偶尔被读出来的"普"混进名字里。
+    不做语义解析。给了 badge_x（徽章列的横范围）就在 OCR 前对副本填充纯色背景，
+    消除纯 CPU 推理时的无效检测框开销，并剔除残余碎片。
     """
+    ocr_image = image
+    if badge_x and image is not None:
+        try:
+            ocr_image = image.copy()
+            bx0 = max(0, badge_x[0] - 2)
+            bx1 = min(image.shape[1], badge_x[1] + 2)
+            by0 = max(0, roi[1])
+            by1 = min(image.shape[0], roi[1] + roi[3])
+            fill_color = (25, 25, 25) if image.ndim == 3 else 25
+            ocr_image[by0:by1, bx0:bx1] = fill_color
+        except Exception:
+            ocr_image = image
+
     detail = context.run_recognition_direct(
         JRecognitionType.OCR,
         JOCR(roi=roi),
-        image,
+        ocr_image,
     )
     results = getattr(detail, "all_results", None) or getattr(detail, "filtered_results", None) or []
 
@@ -308,27 +600,104 @@ def _ocr_rows(context, image, roi, min_score, line_tol, badge_x=None):
         box = _rect_of(getattr(result, "box", None))
         if not text or box is None:
             continue
-        if float(getattr(result, "score", 0.0)) < min_score:
-            continue
+        score = float(getattr(result, "score", 0.0))
+        # 降阈放行范围（0.35 ~ min_score）严格限制在角色名列（x > 850）或命中已知角色/别名
+        if score < min_score:
+            is_char_col = (box[0] > 850 or box[0] + box[2] > 850)
+            norm_text = _normalize_name(text)
+            is_known = norm_text in KNOWN_SINNERS or norm_text in OCR_NAME_ALIASES
+            if not (score >= 0.35 and (is_char_col or is_known)):
+                continue
         if badge_x and badge_x[0] <= box[0] + box[2] / 2.0 <= badge_x[1]:
             continue
-        items.append((box[1] + box[3] / 2.0, box[0], box, text))
+
+        split_pair = None
+        # 仅对位于角色名列且高度满足两行特征（box[3] >= 28）的候选尝试拆分
+        if (box[0] > 850 or box[0] + box[2] > 850) and box[3] >= 28:
+            split_pair = _split_merged_names(text)
+        if split_pair:
+            name1, name2 = split_pair
+            h = box[3]
+            half_h = max(1, h // 2)
+            box1 = [box[0], box[1], box[2], half_h]
+            box2 = [box[0], box[1] + half_h, box[2], h - half_h]
+            cy1 = box[1] + h * 0.25
+            cy2 = box[1] + h * 0.75
+            items.append((cy1, box[0], box1, name1))
+            items.append((cy2, box[0], box2, name2))
+        else:
+            items.append((box[1] + box[3] / 2.0, box[0], box, text))
     items.sort()
 
-    rows = []
-    for cy, cx, box, text in items:
-        if rows and abs(cy - rows[-1][0]) <= line_tol:
-            rows[-1][1].append((cx, text, box))
-        else:
-            rows.append([cy, [(cx, text, box)]])
+    # 结合固定表格行区域与网格槽位划分，彻底避免两行合并或拆分成多行
+    rx, ry, rw, rh = roi
+    if 250 <= rh <= 450 and rw >= 500:
+        slot_h = rh / 10.0
+        slots = [[] for _ in range(10)]
+        for cy, cx, box, text in items:
+            k = int((cy - ry) / slot_h)
+            k = max(0, min(9, k))
+            slots[k].append((cx, text, box))
+
+        # 检查边界溢出：如果 slot k 包含 2 个角色名（x > 850 区域）而 slot k+1 没有，向下转移
+        for k in range(9):
+            names_k = [c for c in slots[k] if c[0] > 850]
+            if len(names_k) >= 2 and not any(c[0] > 850 for c in slots[k + 1]):
+                lower = max(names_k, key=lambda c: c[2][1])
+                slots[k].remove(lower)
+                slots[k + 1].append(lower)
+
+        repaired_rows = []
+        for k in range(10):
+            if slots[k]:
+                slots[k].sort(key=lambda c: c[0])
+                repaired_rows.append((ry + (k + 0.5) * slot_h, slots[k]))
+    else:
+        # 回退模式（用于非标准测试桩）
+        rows = []
+        for cy, cx, box, text in items:
+            if rows and abs(cy - rows[-1][0]) <= line_tol:
+                rows[-1][1].append((cx, text, box))
+            else:
+                rows.append([cy, [(cx, text, box)]])
+        repaired_rows = []
+        i = 0
+        while i < len(rows):
+            cy, cells = rows[i]
+            cells.sort(key=lambda c: c[0])
+            if len(cells) == 2 and i + 1 < len(rows):
+                next_cy, next_cells = rows[i + 1]
+                if len(next_cells) == 1 and abs(next_cy - cy) <= line_tol * 2.0 and next_cells[0][0] > cells[1][0]:
+                    repaired_rows.append([cy, cells + next_cells])
+                    i += 2
+                    continue
+            if len(cells) == 1 and repaired_rows and len(repaired_rows[-1][1]) == 2:
+                prev_cy, prev_cells = repaired_rows[-1]
+                if abs(cy - prev_cy) <= line_tol * 2.0 and cells[0][0] > prev_cells[1][0]:
+                    repaired_rows[-1][1] = prev_cells + cells
+                    i += 1
+                    continue
+            repaired_rows.append([cy, cells])
+            i += 1
 
     cells_list = []
     box_list = []
-    for _, cells in rows:
+    for _, cells in repaired_rows:
         cells.sort(key=lambda c: c[0])
         row_texts = [c[1] for c in cells]
-        if row_texts and re.match(r"^\d{4}-\d{2}-\d{2}[.\s_T]?\d{2}:\d{2}:\d{2}$", row_texts[0]):
-            row_texts[0] = re.sub(r"^(\d{4}-\d{2}-\d{2})[.\s_T]?(\d{2}:\d{2}:\d{2})$", r"\1 \2", row_texts[0])
+        if row_texts:
+            # 处理 OCR 偶发将时间戳与卡池名粘连在同一个文本框的情况（如 2024-02-08 22:19:29光影留痕）
+            m = re.match(r"^(\d{4}-\d{2}-\d{2}[.\s_T]*\d{2}:\d{2}:\d{2})\s*(.+)$", row_texts[0])
+            if m:
+                ts = re.sub(r"^(\d{4}-\d{2}-\d{2})[.\s_T]*(\d{2}:\d{2}:\d{2})$", r"\1 \2", m.group(1))
+                remainder = m.group(2).strip()
+                row_texts = [ts, remainder] + row_texts[1:]
+            elif re.match(r"^\d{4}-\d{2}-\d{2}[.\s_T]*\d{2}:\d{2}:\d{2}$", row_texts[0]):
+                row_texts[0] = re.sub(r"^(\d{4}-\d{2}-\d{2})[.\s_T]*(\d{2}:\d{2}:\d{2})$", r"\1 \2", row_texts[0])
+            # 规范化卡池名与角色名写回记录本体
+            if len(row_texts) >= 3:
+                row_texts[1] = _normalize_pool(row_texts[1])
+                row_texts[-1] = _normalize_name(row_texts[-1])
         cells_list.append(tuple(row_texts))
         boxes = [c[2] for c in cells]
         x0 = min(b[0] for b in boxes)
@@ -340,9 +709,18 @@ def _ocr_rows(context, image, roi, min_score, line_tol, badge_x=None):
 
 
 def _row_sig(cells):
-    """一条记录的身份键：整行文本去掉空白后拼接。
-    OCR 常把日期与时间之间的空格吃掉（实测 10 行里 3 行），不归一化就没法跟档案里的旧记录对上。"""
-    return re.sub(r"\s+", "", "".join(cells))
+    """一条记录的身份键：统一去除空白与时间分隔符，且规范化卡池与角色名。
+    保证跨设备、跨运行、不管 OCR 空格、点号还是错字变体，Key 恒定一致。"""
+    if len(cells) >= 3:
+        ts_digits = re.findall(r"\d+", str(cells[0]))
+        if len(ts_digits) >= 6:
+            ts = "".join(ts_digits[:6])
+        else:
+            ts = re.sub(r"[\s\.\_T\-:]+", "", str(cells[0]))
+        pool = re.sub(r"[\s\·\.\•\u2022\u25cf\u00b7]+", "", str(cells[1]))
+        name = _normalize_name(str(cells[-1]).strip())
+        return f"{ts}{pool}{name}"
+    return re.sub(r"[\s\·\.\•\u2022\u25cf\u00b7]+", "", "".join(str(c) for c in cells))
 
 
 # 实测与官方卡池类型：活动/常规/限定/返场限定/定向/综合/统合/常驻/特选/新手 等
@@ -393,7 +771,6 @@ class GachaRecordPoolType(CustomRecognition):
     类型识别不出来不阻断采集（父节点 on_error 照走），记录落 未判.jsonl。
     """
 
-    @_locked
     def analyze(self, context, argv):
         param = _parse_param(argv)
         archive = param.get("archive") or DEFAULT_ARCHIVE
@@ -470,7 +847,6 @@ class GachaRecordFirstPage(CustomRecognition):
     参数与 GachaRecordPage 相同（roi 取列表区域），上一眼的行签名存会话的 back_keys。
     """
 
-    @_locked
     def analyze(self, context, argv):
         param = _parse_param(argv)
         archive = param.get("archive") or DEFAULT_ARCHIVE
@@ -486,11 +862,22 @@ class GachaRecordFirstPage(CustomRecognition):
         badge_x = _as_x_range(param.get("badge_x"))
         gate_roi = _as_rect(param.get("gate_roi"), [411, 210, 420, 55])
         gate_text = param.get("gate_text") or "近期抽卡记录"
+        page_roi = _as_rect(param.get("page_roi"), [735, 625, 65, 36])
 
         # 门卫：不在记录页（页头没有「近期抽卡记录」）绝不命中。本节点的动作是点 ◀，
         # 坐标在抽卡页上紧挨「追踪一次」按钮，一旦在错误页面点击可能误触抽卡。
         if not _ocr_find(context, argv.image, gate_roi, [gate_text], min_score):
             return None
+
+        # 优先前置检查页码：若已是第 1 页，0 点击、0 等待直接放行！
+        page_no = _read_page_number(context, argv.image, page_roi, min_score)
+        if page_no == 1:
+            session.back_keys = None
+            _log("GachaRecordFirstPage 当前底栏已是第 1 页，直接跳过回首页")
+            return None
+        if page_no is not None and page_no > 1:
+            _log(f"GachaRecordFirstPage 当前在第 {page_no} 页，点击 ◀ 翻回上一页")
+            return self.AnalyzeResult(box=roi, detail={"page": page_no})
 
         rows, _ = _ocr_rows(context, argv.image, roi, min_score, line_tol, badge_x)
         keys = [_row_sig(cells) for cells in rows]
@@ -512,6 +899,16 @@ class GachaRecordFirstPage(CustomRecognition):
 
         session.back_keys = keys
         return self.AnalyzeResult(box=roi, detail={"rows": len(rows)})
+
+
+def _log_corrupted_row(session, cells, key):
+    try:
+        log_file = session.path / "异常行.log"
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] 页码尝试: {session.attempts} | 键: {key} | 列数: {len(cells)} | 原文: {list(cells)}\n")
+    except Exception as e:
+        _log(f"写入异常行日志失败: {e}")
 
 
 @AgentServer.custom_recognition("GachaRecordPage")
@@ -571,23 +968,108 @@ class GachaRecordPage(CustomRecognition):
         return self.AnalyzeResult(box=box, detail=detail)
 
     def _fresh_row_indices(self, session, rows, keys):
-        fresh = []
+        """对整页行执行精确匹配与受约束内存模糊去重。
+        返回 (fresh_indices, hit_known_count)。"""
+        valid_items = []
         for index, (cells, key) in enumerate(zip(rows, keys)):
             if len(cells) < 3:
+                _log(f"GachaRecordPage ⚠️ 警告：第 {session.attempts} 页第 {index + 1} 行字段不足 3 列 (原文: {cells})，记录至异常行日志并跳过")
+                _log_corrupted_row(session, cells, key)
                 continue
-            session.run_counts[key] = session.run_counts.get(key, 0) + 1
-            if session.run_counts[key] > session.store_counts.get(key, 0):
-                fresh.append(index)
-        return fresh
+            ts_digits = "".join(re.findall(r"\d+", str(cells[0]))[:6])
+            valid_items.append({
+                "index": index,
+                "cells": list(cells),
+                "key": key,
+                "ts_norm": ts_digits,
+                "pool_norm": _normalize_pool(cells[1]),
+                "name_norm": _normalize_name(cells[-1]),
+            })
+
+        if not valid_items:
+            return [], 0
+
+        # 按连续相同 ts_norm 分组
+        groups = []
+        curr_group = [valid_items[0]]
+        for item in valid_items[1:]:
+            if item["ts_norm"] == curr_group[0]["ts_norm"]:
+                curr_group.append(item)
+            else:
+                groups.append(curr_group)
+                curr_group = [item]
+        groups.append(curr_group)
+
+        fresh_indices = []
+        hit_known_count = 0
+
+        for grp in groups:
+            ts_norm = grp[0]["ts_norm"]
+            hist_list = session.by_timestamp.get(ts_norm, [])
+            cand_consumed = [False] * len(hist_list)
+
+            # 1. 精确匹配优先扣减历史配额
+            unmatched = []
+            for item in grp:
+                key = item["key"]
+                session.run_counts[key] = session.run_counts.get(key, 0) + 1
+                if session.run_counts[key] <= session.store_counts.get(key, 0):
+                    hit_known_count += 1
+                    for c_idx, cand in enumerate(hist_list):
+                        if not cand_consumed[c_idx] and cand["key"] == key:
+                            cand_consumed[c_idx] = True
+                            break
+                else:
+                    unmatched.append(item)
+
+            # 2. 受约束模糊匹配
+            for item in unmatched:
+                name_norm = item["name_norm"]
+                pool_norm = item["pool_norm"]
+                matching_cands = []
+                for c_idx, cand in enumerate(hist_list):
+                    if cand_consumed[c_idx]:
+                        continue
+                    pool_dist = _levenshtein(pool_norm, cand["pool"])
+                    if pool_dist > 1 and pool_norm not in cand["pool"] and cand["pool"] not in pool_norm:
+                        continue
+                    if _match_fuzzy_candidate(name_norm, None, cand["name"], cand.get("rarity")):
+                        matching_cands.append((c_idx, cand))
+
+                if len(matching_cands) == 1:
+                    c_idx, cand = matching_cands[0]
+                    cand_consumed[c_idx] = True
+                    hit_known_count += 1
+                    canon_key = cand["key"]
+                    session.run_counts[canon_key] = session.run_counts.get(canon_key, 0) + 1
+                    keys[item["index"]] = canon_key
+                    _log(f"GachaRecordPage 内存模糊去重命中：[{name_norm}] 归并至历史记录 [{cand['name']}] (key={canon_key})")
+                elif len(matching_cands) > 1:
+                    _log_pending_review(session, item["cells"], "多候选冲突", [c[1]["name"] for c in matching_cands])
+                    fresh_indices.append(item["index"])
+                else:
+                    fresh_indices.append(item["index"])
+
+        if hit_known_count > 0 and not fresh_indices:
+            _log(f"GachaRecordPage 第 {session.attempts} 页：全部 {hit_known_count} 行均已在库中（去重跳过）")
+        elif hit_known_count > 0:
+            _log(f"GachaRecordPage 第 {session.attempts} 页：{hit_known_count} 行已在库中，新增 {len(fresh_indices)} 行")
+
+        return fresh_indices, hit_known_count
 
     def _scan_fresh(self, session, rows, keys, rarities):
         """整页逐行与档案去重比对：出现次数超过已存次数的才算新记录
         （十连里同秒重复的同名条目靠这个计数规则保留）。"""
-        return [(rows[index], keys[index], rarities[index])
-                for index in self._fresh_row_indices(session, rows, keys)]
+        fresh_indices, _ = self._fresh_row_indices(session, rows, keys)
+        return [(rows[index], keys[index], rarities[index]) for index in fresh_indices]
 
-    @_locked
     def analyze(self, context, argv):
+        t_page_start = time.perf_counter()
+        t_page_no_cost = 0.0
+        t_rows_cost = 0.0
+        t_dedup_cost = 0.0
+        t_rarity_cost = 0.0
+
         param = _parse_param(argv)
         archive = param.get("archive") or DEFAULT_ARCHIVE
         session = _get_session(archive)
@@ -611,10 +1093,13 @@ class GachaRecordPage(CustomRecognition):
             h, w = argv.image.shape[0], argv.image.shape[1]
             roi = _as_rect(param.get("roi"), [0, 0, w, h])
 
-        session.store_counts, _ = _load_store(session.path)
+        if session.attempts == 0:
+            session.store_counts, _, session.by_timestamp = _load_store(session.path)
         session.attempts += 1
         if session.attempts > int(param.get("max_pages", 100)):
             _log(f"GachaRecordPage 达到 max_pages，转汇总导出（本次已新增 {session.new_count} 条）")
+            session.status = "partial"
+            session.finish_reason = "达到最大采集页数"
             return self._route(context, argv, next_overflow, roi,
                                {"reason": "max_pages", "new": session.new_count})
 
@@ -623,123 +1108,231 @@ class GachaRecordPage(CustomRecognition):
         outcome = None
         rows = boxes = keys = rarities = None
         fresh = []
+        page_no = None
+        hit_known_count = 0
         for attempt in range(2):
-            # 记录页门卫：页头「…近期抽卡记录(UTC+8)」只有记录页有。入口直通，
-            # 没这道门就会把任意屏幕上的文字当记录写进累计档案，宁可放弃这一页。
-            if not _ocr_find(context, image, gate_roi, [gate_text], min_score):
-                outcome = ("off_page", {})
-                rows = boxes = keys = rarities = None
-            else:
-                # 页码是"翻页是否生效 / 是否到最后一页"的主判据（裁出放大后 OCR，可靠）
-                page_no = _read_page_number(context, image, page_roi, min_score)
-                rows, boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
-                keys = [_row_sig(cells) for cells in rows]
-                if not rows:
-                    outcome = ("empty", {})
-                elif page_no is not None and page_no == session.last_page:
-                    # 页码没动 = 翻页没生效（点击延迟/丢失）或已在最后一页
-                    outcome = ("no_advance", {"page": page_no})
-                elif page_no is None and session.last_keys and keys == session.last_keys:
-                    # 页码未读出，但行签名与上一页一致 = 未翻页
-                    outcome = ("no_advance", {"page": session.last_page})
-                else:
-                    if page_no is None:
-                        # 行签名不同说明已成功翻页，页码偶然未识别时按上一页递增推导
-                        page_no = (session.last_page or 0) + 1
-                        _log(f"GachaRecordPage 底栏页码读数为空，根据记录行内容变化推导为第 {page_no} 页")
-                    session.last_page = page_no
-                    session.last_keys = keys
-                    fresh_indices = self._fresh_row_indices(session, rows, keys)
-                    if stop_on_known and not fresh_indices:
-                        # 识别到已知停止：本页全是已入库的记录，下面的页只会更旧，
-                        # 立即停（这一眼不是翻页后的确认，没有竞态，不需要重截）
-                        outcome = ("known_stop", {})
+            t0 = time.perf_counter()
+            page_no = _read_page_number(context, image, page_roi, min_score)
+            t_page_no_cost += time.perf_counter() - t0
+
+            # 翻页页码先验：若处于多页采集阶段
+            if session.last_page is not None and session.attempts > 1:
+                if attempt == 0 and page_no == session.last_page:
+                    time.sleep(0.25)
+                    ctrl.post_screencap().wait()
+                    image = ctrl.cached_image
+                    t0 = time.perf_counter()
+                    page_no = _read_page_number(context, image, page_roi, min_score)
+                    t_page_no_cost += time.perf_counter() - t0
+                    if page_no == session.last_page:
+                        # 仍未变，进入 attempt == 1 等待 0.5s，避免直接判定 no_advance
+                        continue
+                elif attempt == 1 and page_no == session.last_page:
+                    time.sleep(0.5)
+                    ctrl.post_screencap().wait()
+                    image = ctrl.cached_image
+                    t0 = time.perf_counter()
+                    page_no = _read_page_number(context, image, page_roi, min_score)
+                    t_page_no_cost += time.perf_counter() - t0
+                    if page_no == session.last_page:
+                        outcome = ("no_advance", {"page": page_no})
                         break
-                    if fresh_indices:
-                        # 已知行不参与稀有度模板识别；重复采集整页已知时不再做三轮全图匹配。
-                        fresh_rarities = _rarity_by_row(
-                            context, image, [boxes[index] for index in fresh_indices],
-                            param.get("rarity_dir", "抽卡"),
-                            param.get("rarity_tiers") or [],
-                            float(param.get("rarity_floor", 0.5)),
-                        )
-                        unknown = [r for r in fresh_rarities if r and r.startswith("未知")]
-                        if unknown:
-                            _log(f"GachaRecordPage 有徽章没匹上任何档，需要往对应目录补图: {unknown}")
-                        fresh = [(rows[index], keys[index], rarity)
-                                 for index, rarity in zip(fresh_indices, fresh_rarities)]
-                    else:
-                        _log(f"GachaRecordPage 第 {page_no} 页均为已知记录，跳过稀有度识别")
-                    outcome = None
+                elif attempt == 0 and (page_no is None or page_no != session.last_page + 1):
+                    time.sleep(0.25)
+                    ctrl.post_screencap().wait()
+                    image = ctrl.cached_image
+                    t0 = time.perf_counter()
+                    retry_page = _read_page_number(context, image, page_roi, min_score)
+                    t_page_no_cost += time.perf_counter() - t0
+                    if retry_page is not None:
+                        page_no = retry_page
+                        if page_no == session.last_page:
+                            continue
+
+            if page_no is not None and session.last_page is not None and page_no > session.last_page + 1:
+                _log(f"GachaRecordPage ⚠️ 警告：检测到页码非连续跳变（从第 {session.last_page} 页直接跳至第 {page_no} 页）")
+
+            t0 = time.perf_counter()
+            rows, boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
+            t_rows_cost += time.perf_counter() - t0
+
+            # 若非末页检测到结构缺失（仅解析出 8~9 行），消耗预算尝试重截重试 1 次
+            if len(rows) in (8, 9) and session.extra_ocr_budget > 0 and attempt == 0:
+                session.extra_ocr_budget -= 1
+                _log(f"GachaRecordPage 检测到表格疑似缺失行 (仅 {len(rows)} 行)，消耗重试预算 (剩余 {session.extra_ocr_budget} 次) 重截重试")
+                time.sleep(0.3)
+                ctrl.post_screencap().wait()
+                image = ctrl.cached_image
+                t0 = time.perf_counter()
+                retry_rows, retry_boxes = _ocr_rows(context, image, roi, min_score, line_tol, badge_x)
+                t_rows_cost += time.perf_counter() - t0
+                if len(retry_rows) > len(rows):
+                    rows, boxes = retry_rows, retry_boxes
+
+            keys = [_row_sig(cells) for cells in rows]
+
+            if not rows:
+                if not _ocr_find(context, image, gate_roi, [gate_text], min_score):
+                    outcome = ("off_page", {})
+                    session.status = "partial"
+                    session.finish_reason = "脱离抽卡记录页"
+                    rows = boxes = keys = rarities = None
+                else:
+                    outcome = ("empty", {})
+            elif page_no is not None and page_no == session.last_page:
+                outcome = ("no_advance", {"page": page_no})
+            elif page_no is None and session.last_keys and keys == session.last_keys:
+                outcome = ("no_advance", {"page": session.last_page})
+            else:
+                if page_no is None:
+                    page_no = (session.last_page or 0) + 1
+                    _log(f"GachaRecordPage 底栏页码读数为空，根据记录行内容变化推导为第 {page_no} 页")
+                session.last_page = page_no
+                session.last_keys = keys
+
+                # 优先跑内存受约束模糊去重与精确匹配（< 1ms）
+                t0 = time.perf_counter()
+                fresh_indices, hit_known_count = self._fresh_row_indices(session, rows, keys)
+                t_dedup_cost += time.perf_counter() - t0
+
+                if stop_on_known and not fresh_indices:
+                    outcome = ("known_stop", {})
+                    session.status = "completed"
+                    session.finish_reason = "命中已知历史记录（增量采集完成）"
+                    fresh = []
+                    break
+
+                if fresh_indices:
+                    t0 = time.perf_counter()
+                    cell_names = [rows[index][-1] if len(rows[index]) >= 3 else "" for index in fresh_indices]
+                    badge_roi = None
+                    if badge_x:
+                        img_h, img_w = image.shape[:2]
+                        bx0 = max(0, badge_x[0] - 8)
+                        bx1 = min(img_w, badge_x[1] + 8)
+                        by0 = max(0, roi[1] - 4)
+                        by1 = min(img_h, roi[1] + roi[3] + 4)
+                        badge_roi = [bx0, by0, bx1 - bx0, by1 - by0]
+                    fresh_rarities = _rarity_by_row(
+                        context, image, [boxes[index] for index in fresh_indices],
+                        param.get("rarity_dir", "抽卡"),
+                        param.get("rarity_tiers") or [],
+                        float(param.get("rarity_floor", 0.5)),
+                        cell_names=cell_names,
+                        badge_roi=badge_roi,
+                    )
+                    t_rarity_cost += time.perf_counter() - t0
+                    unknown = [r for r in fresh_rarities if r and r.startswith("未知")]
+                    if unknown:
+                        _log(f"GachaRecordPage 有徽章没匹上任何档，需要往对应目录补图: {unknown}")
+                    fresh = [(rows[index], keys[index], rarity)
+                             for index, rarity in zip(fresh_indices, fresh_rarities)]
+                else:
+                    _log(f"GachaRecordPage 第 {page_no} 页均为已知记录，跳过稀有度识别")
+                    fresh = []
+
+                if stop_on_known and (hit_known_count >= 2 or (len(fresh) == 0 and hit_known_count >= 1)):
+                    outcome = ("known_stop", {})
+                    session.status = "completed"
+                    session.finish_reason = "命中已知历史记录（增量采集完成）"
+                    break
+                outcome = None
             if outcome is None:
                 break
             if attempt == 0:
-                # 停一次再确认：翻页点击可能延迟生效，首帧往往还是旧页
-                time.sleep(0.8)
+                time.sleep(0.5)
                 ctrl.post_screencap().wait()
                 image = ctrl.cached_image
+
+        t_page_total = time.perf_counter() - t_page_start
+        if page_no is not None:
+            _log(f"⏱️ GachaRecordPage 第 {page_no} 页耗时统计: 总计 {t_page_total:.2f}s "
+                 f"(页码OCR: {t_page_no_cost:.2f}s | 表格OCR: {t_rows_cost:.2f}s | "
+                 f"模糊去重: {t_dedup_cost * 1000:.1f}ms | 稀有度: {t_rarity_cost:.2f}s)")
 
         if outcome is not None:
             reason, detail = outcome
             if reason == "no_advance" and session.stall_retries < max_stall:
-                # 页码不动先别判停：模拟器卡顿、点击延迟/丢失都会这样。
-                # 路由回「翻页」再点一次 ▶；每次回来都会先重截一帧确认，最多 max_stall 次。
                 session.stall_retries += 1
                 _log(f"GachaRecordPage 页码停在第 {detail.get('page')} 页，"
                      f"重试翻页（第 {session.stall_retries}/{max_stall} 次）")
                 return self._route(context, argv, next_fresh,
                                    boxes[0] if boxes else roi, {"reason": reason, **detail})
             session.stall_retries = 0
-            # 判停去哪儿：确认到达末页（含单页列表）走 next_last，其余（不在记录页 / 空页 /
-            # 达到 max_pages / 识别到已知停止 / 输入疑似失灵）都走 next_done。
+
             done_target = next_done
-            if reason == "no_advance":
+            if reason == "empty":
+                session.status = "completed"
+                session.finish_reason = "空记录页采集完成"
+            elif reason == "no_advance":
                 page_now = detail.get("page")
                 if page_now is not None and page_now <= 1:
-                    # 停在第 1 页：◀ 在这一页本就不可用，对照点击反证不了什么；
-                    # 第 1 页上 ▶ 不动本身就是"列表只有一页"的证据。
                     detail["probe"] = "single_page"
                     done_target = next_last
-                    _log("GachaRecordPage 判停：停在第 1 页，▶ 无响应即列表只有一页"
-                         "（◀ 在第 1 页不可用，无法用对照点击反证输入通道）")
+                    session.status = "completed"
+                    session.finish_reason = "单页列表采集完成"
+                    _log("GachaRecordPage 判停：停在第 1 页，▶ 无响应即列表只有一页")
                 else:
-                    # 重试用尽仍不动：末页与"点击失灵"在图像上完全一样（实测 ▶ 像素级一致），
-                    # 点一次 ◀ 反证输入通道——页码变了说明通道没问题，就是列表到底了。
                     verdict, after = _probe_back(
                         context, page_roi, min_score, back_point, page_now)
                     detail["probe"] = verdict
                     detail["probe_page"] = after
                     if verdict == "ok":
                         done_target = next_last
+                        session.status = "completed"
+                        session.finish_reason = "确认到达末页"
                         _log(f"GachaRecordPage 判停：点 ◀ 页码回到 {after}，输入通道正常，判定为最后一页")
                     elif verdict == "stall":
-                        _log(f"GachaRecordPage ⚠ 判停：点 ◀ 后页码仍是 {after}，"
-                             f"翻页与返回键都没响应，疑似输入通道失灵，本次采集可能不完整")
+                        session.status = "partial"
+                        session.finish_reason = "翻页无响应且反证失败（疑似输入失灵）"
+                        _log(f"GachaRecordPage ⚠ 判停：点 ◀ 后页码仍是 {after}，疑似输入通道失灵")
                     else:
-                        _log("GachaRecordPage ⚠ 判停：点 ◀ 后读不到页码（可能已离开记录页），状态不明，请复核")
+                        session.status = "partial"
+                        session.finish_reason = "状态不明（脱离记录页）"
+                        _log("GachaRecordPage ⚠ 判停：点 ◀ 后读不到页码，状态不明")
+            _write_progress(session, "finishing", detail.get("page"))
             _log(f"GachaRecordPage 判停（{reason}），转 {done_target} 导出")
             return self._route(context, argv, done_target,
                                boxes[0] if boxes else roi, {"reason": reason, **detail})
 
-        # 本页读完了，页号记入会话供下一页判断翻页是否生效
+        # 本页正常读完
         session.stall_retries = 0
         total = sum(session.store_counts.values())
         if fresh:
             target = session.file_for(session.pool_type)
-            with open(target, "a", encoding="utf-8") as f:
-                for cells, key, rarity in fresh:
-                    session.new_count += 1
-                    total += 1
-                    # 同步抬上去重计数：同一条记录本轮再见到时不会被当成新的
-                    session.store_counts[key] = session.store_counts.get(key, 0) + 1
-                    f.write(json.dumps(
-                        {"index": total, "key": key, "rarity": rarity,
-                         "type": session.pool_type, "cells": list(cells)},
-                        ensure_ascii=False,
-                    ) + "\n")
+            with _archive_lock():
+                with open(target, "a", encoding="utf-8") as f:
+                    for cells, key, rarity in fresh:
+                        session.new_count += 1
+                        total += 1
+                        session.store_counts[key] = session.store_counts.get(key, 0) + 1
+                        f.write(json.dumps(
+                            {"index": total, "key": key, "rarity": rarity,
+                             "type": session.pool_type, "cells": list(cells)},
+                            ensure_ascii=False,
+                        ) + "\n")
+                        _log(f"GachaRecordPage 写入新增记录: {cells} (key={key}, rarity={rarity})")
             _log(f"GachaRecordPage 第 {page_no} 页：采到 {len(rows)} 行，新增 {len(fresh)} 条 -> {target.name}，累计 {total} 条")
         else:
-            _log(f"GachaRecordPage 第 {page_no} 页：{len(rows)} 行都已入库，无新增，继续翻页")
+            _log(f"GachaRecordPage 第 {page_no} 页：{len(rows)} 行均在库中（或已归并），无新增，继续翻页")
+
+        session.pages += 1
+        session.known_count += hit_known_count
+        _write_progress(session, "running", page_no)
+
+        if stop_on_known and (hit_known_count >= 2 or (len(fresh) == 0 and hit_known_count >= 1)):
+            session.status = "completed"
+            session.finish_reason = "命中已知历史记录（增量采集完成）"
+            _write_progress(session, "finishing", page_no)
+            _log(f"GachaRecordPage 第 {page_no} 页在增量模式下命中已知历史记录 (已知 {hit_known_count} 条，新增 {len(fresh)} 条)，保存新增后收尾")
+            return self._route(context, argv, next_done, boxes[-1],
+                               {"page": page_no, "rows": len(rows), "new_rows": len(fresh),
+                                "total": total, "archive": str(session.path), "status": session.status})
+
+        return self._route(context, argv, next_fresh, boxes[-1],
+                           {"page": page_no, "rows": len(rows), "new_rows": len(fresh),
+                            "total": total, "archive": str(session.path)})
+
         # 每页读完都翻页继续。override 每轮都显式重置，防止上一页留下的路由残留。
         return self._route(context, argv, next_fresh, boxes[-1],
                            {"page": page_no, "rows": len(rows), "new_rows": len(fresh),
@@ -837,8 +1430,12 @@ def _write_report(path, groups, session, total):
     order = sorted(counts, key=lambda t: -counts[t])
     rare = [t for t in order if t != order[0]]
 
+    status_tag = ""
+    if session.status != "completed":
+        status_tag = f" ⚠️【采集状态：部分完成 ({session.finish_reason or '未确认到达末页'})】"
+
     lines = [
-        "# 抽卡记录",
+        f"# 抽卡记录{status_tag}",
         "",
         f"本次新增 {session.new_count} 条，累计 {total} 条 · 完整明细见 `{path.with_suffix('.xlsx').name}`",
         "",
@@ -854,7 +1451,7 @@ def _write_report(path, groups, session, total):
 
     hits = [(rec, type_name) for type_name, recs in groups.items() for rec in recs
             if (rec["rarity"] or "未判") in rare]
-    hits.sort(key=lambda x: _record_time(x[0]), reverse=True)
+    hits.sort(key=lambda x: (_record_time(x[0]), -x[0].get("index", 0)), reverse=True)
     lines += ["", f"## 出货（{'、'.join(rare)}，最近 {min(len(hits), 60)} 条）", ""]
     if hits:
         lines += ["| 时间 | 类型 | 卡池 | 稀有度 | 名称 | 档案序号 |",
@@ -930,8 +1527,8 @@ class GachaRecordExport(CustomAction):
             for type_name in _type_order(groups):
                 ws = wb.create_sheet(_sheet_name(type_name, used))
                 ws.append(["时间", "卡池", "稀有度", "名称", "档案序号"])
-                # 档案是"单次采集内部新在前、多次采集按跑的先后追加"，直接倒出来顺序是乱的，按时间重排
-                for rec in sorted(groups[type_name], key=_record_time, reverse=True):
+                # 档案是"单次采集内部新在前、多次采集按跑的先后追加"，直接倒出来顺序是乱的，按时间与序号重排
+                for rec in sorted(groups[type_name], key=lambda r: (_record_time(r), -r.get("index", 0)), reverse=True):
                     cells = rec["cells"]
                     # 实测列序为 时间 / 卡池 / 名称；列数不足就把原文并到名称里，不做猜测
                     time_, pool_, name_ = (
@@ -943,6 +1540,7 @@ class GachaRecordExport(CustomAction):
         report = param.get("report") or DEFAULT_REPORT
         report_path = _data_root() / report
         _write_report(report_path, groups, session, total)
+        _write_progress(session, "done")
         _log(
             f"抽卡记录导出：本次新增 {session.new_count} 条 / 累计 {total} 条 / {len(groups)} 个追踪类型 "
             f"-> {out.name} + {report_path.name}"

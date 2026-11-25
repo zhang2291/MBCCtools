@@ -186,6 +186,32 @@ class GachaTests(unittest.TestCase):
             res3 = agent.GachaRecordPoolType().analyze(context, argv)
             self.assertIsNone(res3)
 
+    def test_merged_timestamp_and_pool_split(self):
+        def item(text, x, y, score=1):
+            return SimpleNamespace(text=text, box=[x, y, 30, 15], score=score)
+        results = [
+            item('2024-02-08 22:19:29光影留痕', 440, 100),
+            item('玛奇朵', 930, 100)
+        ]
+        ctx = SimpleNamespace(run_recognition_direct=lambda *args: SimpleNamespace(all_results=results))
+        rows, boxes = agent._ocr_rows(ctx, np.zeros((720, 1280, 3), dtype=np.uint8), [0, 0, 1280, 720], .5, 14, [856, 908])
+        self.assertEqual([('2024-02-08 22:19:29', '光影留痕', '玛奇朵')], rows)
+
+    def test_first_page_check_bypasses_when_page_is_one(self):
+        context = SimpleNamespace(
+            override_next=lambda *args: True,
+            tasker=SimpleNamespace(controller=SimpleNamespace()),
+        )
+        argv = SimpleNamespace(
+            roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+            image=np.zeros((720, 1280, 3), dtype=np.uint8),
+            node_name='抽卡记录_回首页', custom_recognition_param={},
+        )
+        with patch.object(agent, '_ocr_find', return_value=True), \
+                patch.object(agent, '_read_page_number', return_value=1):
+            res = agent.GachaRecordFirstPage().analyze(context, argv)
+            self.assertIsNone(res)
+
     def test_option_overrides_use_v2_and_keep_existing_tasks(self):
         interface = json.loads((ROOT / 'interface.json').read_text(encoding='utf-8'))
         cases = interface['option']['识别方式']['cases']
@@ -193,6 +219,55 @@ class GachaTests(unittest.TestCase):
         self.assertEqual([False, True], modes)
         task = next(t for t in interface['task'] if t['name'] == '抽卡记录')
         self.assertFalse(task['default_check'])
+
+    def test_constrained_fuzzy_deduplication_and_same_second_preservation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            archive = pathlib.Path(temp)
+            h1 = {'cells': ['2026-11-18 14:00:10', '慈·爱·念', '卡兹安'], 'rarity': '危'}
+            h2 = {'cells': ['2026-11-18 14:00:10', '慈·爱·念', '澈'], 'rarity': '普'}
+            h3 = {'cells': ['2026-11-18 14:00:10', '慈·爱·念', '澈'], 'rarity': '普'}
+            h4 = {'cells': ['2026-11-18 14:00:10', '慈·爱·念', '海拉'], 'rarity': '普'}
+            (archive / '活动.jsonl').write_text(
+                '\n'.join(json.dumps(r, ensure_ascii=False) for r in [h1, h2, h3, h4]) + '\n',
+                encoding='utf-8'
+            )
+            counts, total, by_ts = agent._load_store(archive)
+            self.assertEqual(4, total)
+            self.assertEqual(1, len(by_ts))
+            session = agent._RecordSession(archive, 'test', counts, by_ts)
+            collector = agent.GachaRecordPage()
+
+            # 3字及以上角色允许唯一编辑距离<=1归并：卡茲安 -> 卡兹安
+            rows1 = [('2026-11-18 14:00:10', '慈·爱·念', '卡茲安')]
+            keys1 = [agent._row_sig(r) for r in rows1]
+            fresh1, known1 = collector._fresh_row_indices(session, rows1, keys1)
+            self.assertEqual(0, len(fresh1))
+            self.assertEqual(1, known1)
+
+            # 同秒重复出货配额扣减：2 个澈均正常命中历史配额
+            rows2 = [('2026-11-18 14:00:10', '慈·爱·念', '澈')] * 2
+            keys2 = [agent._row_sig(r) for r in rows2]
+            fresh2, known2 = collector._fresh_row_indices(session, rows2, keys2)
+            self.assertEqual(0, len(fresh2))
+            self.assertEqual(2, known2)
+
+            # 超出配额的第 3 个澈判定为 fresh
+            rows3 = [('2026-11-18 14:00:10', '慈·爱·念', '澈')]
+            keys3 = [agent._row_sig(r) for r in rows3]
+            fresh3, known3 = collector._fresh_row_indices(session, rows3, keys3)
+            self.assertEqual(1, len(fresh3))
+
+            # 1 字角色禁止模糊归并：琼 不归并至 澈
+            rows4 = [('2026-11-18 14:00:10', '慈·爱·念', '琼')]
+            keys4 = [agent._row_sig(r) for r in rows4]
+            fresh4, known4 = collector._fresh_row_indices(session, rows4, keys4)
+            self.assertEqual(1, len(fresh4))
+
+            # 2 字角色稀有度不同禁止归并：海莉(危) 不归并至 海拉(普)
+            rows5 = [('2026-11-18 14:00:10', '慈·爱·念', '海莉')]
+            keys5 = [agent._row_sig(r) for r in rows5]
+            fresh5, known5 = collector._fresh_row_indices(session, rows5, keys5)
+            self.assertEqual(1, len(fresh5))
 
 
 if __name__ == '__main__':
