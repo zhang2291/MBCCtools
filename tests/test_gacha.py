@@ -312,6 +312,161 @@ class GachaTests(unittest.TestCase):
             self.assertEqual(3, len(saved))
             self.assertEqual(agent._row_sig(new_row), saved[-1]['key'])
 
+    def test_off_page_gate_failure_never_writes_or_flips_page(self):
+        fake_row = ('2026-11-25 17:10:00', '明轨将追', '假行')
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            routed = []
+            context = SimpleNamespace(
+                override_next=lambda node, next_list: routed.append((node, list(next_list))) or True,
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别',
+                custom_recognition_param=json.dumps({'stop_on_known': True}),
+            )
+            with patch.object(agent, '_ocr_find', return_value=None), \
+                    patch.object(agent, '_ocr_rows', return_value=([fake_row], [[440, 290, 640, 28]])) as ocr_rows:
+                res = agent.GachaRecordPage().analyze(context, argv)
+            self.assertIsNotNone(res)
+            ocr_rows.assert_not_called()
+            self.assertEqual('partial', session.status)
+            self.assertEqual(('抽卡记录_单页识别', ['抽卡记录汇总']), routed[-1])
+            self.assertEqual([], list(session.path.glob('*.jsonl')))
+
+    def test_stop_on_known_does_not_complete_on_corrupted_ocr_rows(self):
+        corrupted_row = ('2026-11-25 17:00:00', '明轨将追')
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            routed = []
+            context = SimpleNamespace(
+                override_next=lambda node, next_list: routed.append((node, list(next_list))) or True,
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别',
+                custom_recognition_param=json.dumps({'stop_on_known': True}),
+            )
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', return_value=1), \
+                    patch.object(agent, '_ocr_rows', return_value=([corrupted_row], [[440, 290, 640, 28]])):
+                res = agent.GachaRecordPage().analyze(context, argv)
+            self.assertIsNotNone(res)
+            self.assertEqual('partial', session.status)
+            self.assertNotIn('命中已知历史记录', session.finish_reason)
+            self.assertEqual(('抽卡记录_单页识别', ['抽卡记录汇总']), routed[-1])
+
+    def test_cross_page_fuzzy_dedup_does_not_reuse_consumed_candidate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            archive = pathlib.Path(temp)
+            h1 = {'cells': ['2026-11-18 14:00:10', '慈·爱·愈', '艾米潘'], 'rarity': '普'}
+            (archive / '活动.jsonl').write_text(json.dumps(h1, ensure_ascii=False) + '\n', encoding='utf-8')
+            counts, total, by_ts = agent._load_store(archive)
+            self.assertEqual(1, total)
+            session = agent._RecordSession(archive, 'test', counts, by_ts)
+            collector = agent.GachaRecordPage()
+
+            # 第 1 页精确命中唯一的「艾米潘」
+            rows1 = [('2026-11-18 14:00:10', '慈·爱·愈', '艾米潘')]
+            keys1 = [agent._row_sig(r) for r in rows1]
+            fresh1, known1 = collector._fresh_row_indices(session, rows1, keys1)
+            self.assertEqual([], fresh1)
+            self.assertEqual(1, known1)
+
+            # 第 2 页跨页遇到同秒同池但 OCR 错成「艾米帕」的另一抽，不能重复消耗已用完的历史记录
+            rows2 = [('2026-11-18 14:00:10', '慈·爱·愈', '艾米帕')]
+            keys2 = [agent._row_sig(r) for r in rows2]
+            fresh2, known2 = collector._fresh_row_indices(session, rows2, keys2)
+            self.assertEqual([0], fresh2)
+            self.assertEqual(0, known2)
+
+    def test_page_jump_recovers_when_back_succeeds_and_marks_partial_when_not(self):
+        row_p2 = ('2026-11-25 17:15:00', '明轨将追', '第2页角色')
+        row_p3 = ('2026-11-25 17:14:00', '明轨将追', '第3页角色')
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            # 1. 跳到第 3 页，点 ◀ 后成功回退到第 2 页恢复
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            session.last_page = 1
+            session.attempts = 1
+            wait_ok = SimpleNamespace(wait=lambda: None)
+            ctrl = SimpleNamespace(
+                cached_image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                post_click=lambda x, y: wait_ok,
+                post_screencap=lambda: wait_ok,
+            )
+            context = SimpleNamespace(override_next=lambda *args: True, tasker=SimpleNamespace(controller=ctrl))
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别',
+                custom_recognition_param={},
+            )
+            # _read_page_number 依次返回: 3 (首次) -> 3 (0.25s复检) -> 2 (◀回退后)
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', side_effect=[3, 3, 2]), \
+                    patch.object(agent, '_ocr_rows', return_value=([row_p2], [[440, 290, 640, 28]])), \
+                    patch.object(agent, '_rarity_by_row', return_value=['普']), \
+                    patch('time.sleep'):
+                agent.GachaRecordPage().analyze(context, argv)
+            self.assertEqual(2, session.last_page)
+            self.assertEqual('running', session.status)
+
+            # 2. 回退未能恢复第 2 页时，必须标为 partial
+            agent._sessions.clear()
+            session2 = agent._get_session(agent.DEFAULT_ARCHIVE)
+            session2.last_page = 1
+            session2.attempts = 1
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', side_effect=[3, 3, 3]), \
+                    patch.object(agent, '_ocr_rows', return_value=([row_p3], [[440, 290, 640, 28]])), \
+                    patch.object(agent, '_rarity_by_row', return_value=['普']), \
+                    patch('time.sleep'):
+                agent.GachaRecordPage().analyze(context, argv)
+            self.assertEqual('partial', session2.status)
+            self.assertIn('页码跳变', session2.finish_reason)
+
+    def test_full_rescan_repairs_unknown_rarity_atomically(self):
+        row = ('2026-11-25 17:20:00', '明轨将追', '未知新角色')
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, MBCC_DATA_DIR=temp):
+            agent._sessions.clear()
+            session = agent._get_session(agent.DEFAULT_ARCHIVE)
+            archive_file = session.file_for('定向')
+            archive_file.write_text(
+                json.dumps(
+                    dict(index=1, key=agent._row_sig(row), rarity='未知:狂:0.41', type='定向', cells=list(row)),
+                    ensure_ascii=False,
+                ) + '\n',
+                encoding='utf-8',
+            )
+            context = SimpleNamespace(
+                override_next=lambda *args: True,
+                tasker=SimpleNamespace(controller=SimpleNamespace()),
+            )
+            argv = SimpleNamespace(
+                roi=SimpleNamespace(x=440, y=275, w=640, h=350),
+                image=np.zeros((720, 1280, 3), dtype=np.uint8),
+                node_name='抽卡记录_单页识别',
+                custom_recognition_param=json.dumps({'stop_on_known': False, 'rarity_tiers': ['狂', '危', '普']}),
+            )
+            with patch.object(agent, '_ocr_find', return_value=True), \
+                    patch.object(agent, '_read_page_number', return_value=1), \
+                    patch.object(agent, '_ocr_rows', return_value=([row], [[440, 290, 640, 28]])), \
+                    patch.object(agent, '_rarity_by_row', return_value=['狂']) as rarity:
+                res = agent.GachaRecordPage().analyze(context, argv)
+            self.assertIsNotNone(res)
+            rarity.assert_called_once()
+            self.assertEqual(0, session.new_count)
+            saved = [json.loads(line) for line in archive_file.read_text(encoding='utf-8').splitlines()]
+            self.assertEqual(1, len(saved))
+            self.assertEqual('狂', saved[0]['rarity'])
+
 
 if __name__ == '__main__':
     unittest.main()
