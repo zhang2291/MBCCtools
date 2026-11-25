@@ -2,7 +2,10 @@
     "刷取材料": {
         "recognition": "DirectHit",
         "action": "DoNothing",
-        "post_wait_freezes": 1000,
+        "post_wait_freezes": {
+            "time": 500,
+            "timeout": 2000
+        },
         "next": [
             "进入新城二",
             "[JumpBack]远邦to新城二",
@@ -322,31 +325,21 @@
             "type": "OCR",
             "param": {
                 "roi": [
-                    1080,
-                    110,
-                    180,
-                    200
+                    887,
+                    536,
+                    386,
+                    174
                 ],
                 "expected": [
-                    "夜莺助手",
-                    "长期任务",
-                    "前往"
+                    "危机管理"
                 ]
             }
         },
         "action": {
-            "type": "Click",
-            "param": {
-                "target": [
-                    1150,
-                    675,
-                    20,
-                    20
-                ]
-            }
+            "type": "Click"
         },
-        "post_delay": 600,
-        "max_hit": 1
+        "post_delay": 800,
+        "max_hit": 2
     },
     "材料导航回主页": {
         "recognition": {
