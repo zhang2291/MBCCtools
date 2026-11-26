@@ -75,10 +75,13 @@ class MaterialRouteTest(unittest.TestCase):
         self.assertIn('[JumpBack]材料收起助手', route[:home_idx])
         for name in ('材料进入狄斯', '材料收起助手', '材料导航回主页'):
             self.assertEqual(self.pipeline[name]['max_hit'], 5)
+        self.assertIn('购买体力', self.pipeline['材料扫荡失败']['recognition']['param']['expected'])
+        self.assertIn('公告', self.pipeline['材料确认主页']['recognition']['param']['expected'])
         assistant = json.loads((ROOT / 'resource/base/pipeline/夜莺助手快捷任务跳转.json').read_text(encoding='utf-8'))
         self.assertEqual(assistant['夜莺助手快捷任务跳转']['on_error'], ['收起助手后结束', '结束任务'])
         self.assertEqual(assistant['助手模式入口点击']['max_hit'], 5)
         self.assertEqual(assistant['收起助手后结束']['max_hit'], 5)
+        self.assertEqual(assistant['收起助手后结束']['next'][0], '确认已回危机管理')
 
     def test_completion_and_shortage_require_home_confirmation(self):
         route = ['材料确认主页', '材料返回主页', '材料返回上级']
