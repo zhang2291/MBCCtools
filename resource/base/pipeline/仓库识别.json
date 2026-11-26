@@ -29,10 +29,11 @@
         ],
         "action": "Click",
         "timeout": 5000,
-        "max_hit": 1,
+        "max_hit": 5,
         "post_delay": 400,
         "next": [
-            "仓库识别_打开仓库"
+            "仓库识别_打开仓库",
+            "仓库识别_打开整备中心"
         ],
         "on_error": [
             "仓库识别_保存汇总"
@@ -49,10 +50,11 @@
         ],
         "action": "Click",
         "timeout": 5000,
-        "max_hit": 1,
+        "max_hit": 5,
         "post_delay": 400,
         "next": [
-            "仓库识别_选择道具"
+            "仓库识别_选择道具",
+            "仓库识别_打开仓库"
         ],
         "on_error": [
             "仓库识别_保存汇总"
@@ -96,7 +98,7 @@
         ],
         "action": "DoNothing",
         "timeout": 4000,
-        "max_hit": 1,
+        "max_hit": 5,
         "next": [
             "仓库识别_扫描道具"
         ],
@@ -165,7 +167,7 @@
         ],
         "action": "DoNothing",
         "timeout": 4000,
-        "max_hit": 1,
+        "max_hit": 5,
         "next": [
             "仓库识别_扫描消耗品"
         ],

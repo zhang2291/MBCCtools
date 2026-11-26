@@ -1,6 +1,6 @@
 {
     "助手模式入口点击": {
-        "max_hit": 1,
+        "max_hit": 5,
         "recognition": {
             "type": "OCR",
             "param": {
@@ -60,7 +60,9 @@
             "type": "Click"
         },
         "post_delay": 800,
+        "max_hit": 5,
         "next": [
+            "收起助手后结束",
             "结束任务"
         ],
         "on_error": [
